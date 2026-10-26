@@ -76,11 +76,21 @@
 
 ## D-015 Room 使用 KSP 并提交 schema 历史
 
-- 决策：Room 2.8.4 通过 KSP 2.3.12 生成代码，`app/schemas` 纳入 Git。
+- 决策：Room 2.8.5 通过 KSP 2.3.12 生成代码，`app/schemas` 纳入 Git。
 - 原因：AGP 9.4 使用内置 Kotlin；KSP 2.3 可直接兼容该构建模型。提交 schema 可以在后续版本自动验证数据库迁移。
 
 ## D-016 coverPhotoId 由 Repository 维护一致性
 
 - 决策：`Meal.coverPhotoId` 不声明到 `MealPhoto` 的数据库外键，而由事务型 Repository 校验它必须指向同一 Meal 的照片。
 - 原因：Meal 与 MealPhoto 已存在反向外键，直接增加循环外键会让初始插入与删除顺序复杂化；Repository 约束保留一致性并方便 Phase 3 的原子照片保存。
+
+## D-017 照片采用 staging + 补偿清理
+
+- 决策：照片先处理到私有 staging，全部成功后移动到正式目录，再在 Room 事务中创建 Meal；任何处理、移动或数据库错误都会删除本次 staging/正式文件。
+- 原因：文件系统与 SQLite 无法共享同一个事务，先验证照片并在失败时补偿清理，可以避免半条 Meal 或长期孤儿文件。
+
+## D-018 Coil 固定 3.3.0 直到 Kotlin 基线升级
+
+- 决策：当前使用 Coil 3.3.0；暂不升级 3.4+。
+- 原因：Coil 3.4+ 使用比 AGP 9.4 内置 Kotlin 2.2.10 更高的 Kotlin 元数据版本，直接升级会导致编译器不兼容。升级 AGP/Kotlin 后再同步更新。
 

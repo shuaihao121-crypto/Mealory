@@ -48,7 +48,7 @@ class MealoryDatabaseTest {
 
         val meal = meal(placeId = place.id, coverPhotoId = "photo-1")
         val photo = photo(mealId = meal.id)
-        repository.createMeal(meal, listOf(photo), setOf(person.id))
+        repository.createMeal(meal, listOf(photo), personIds = setOf(person.id))
 
         val created = repository.getMeal(meal.id)!!
         assertEquals("牛肉面", created.meal.title)
@@ -82,7 +82,7 @@ class MealoryDatabaseTest {
         database.placeDao().insert(place)
 
         val meal = meal(placeId = place.id, coverPhotoId = "photo-1")
-        repository.createMeal(meal, listOf(photo(meal.id)), setOf(person.id))
+        repository.createMeal(meal, listOf(photo(meal.id)), personIds = setOf(person.id))
 
         assertEquals(1, database.personDao().deleteById(person.id))
         assertTrue(repository.getMeal(meal.id)!!.people.isEmpty())

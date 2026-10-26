@@ -111,6 +111,8 @@ UI 与查询以 `dateEpochDay + minuteOfDay + timeZoneId` 为真值。`createdAt
 
 正式目录以相对路径存库，根目录由 PhotoStorage 统一解析。默认标准模式最长边约 2560 px、JPEG 约 90%；不得生成大量永久缩略图。Coil 负责内存/磁盘显示缓存。
 
+当前实现将 staging 放在 `filesDir/pictures/.staging`，正式文件放在 `filesDir/pictures/meals/YYYY/MM/MEAL_UUID/PHOTO_UUID.jpg`。系统相机只获得 `cacheDir/camera` 的 FileProvider 临时 URI；保存、取消和页面销毁均清理临时文件。
+
 软删除不移动或删图片；恢复只清 `deletedAt`。永久删除先确定精确文件清单，在数据库与文件系统间使用可恢复 staging/补偿策略，避免数据库已删但文件残留或反之。
 
 ## 7. DataStore

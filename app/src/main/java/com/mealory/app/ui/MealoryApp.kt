@@ -29,6 +29,8 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +53,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.mealory.app.ui.addmeal.AddMealMode
+import com.mealory.app.ui.addmeal.AddMealScreen
 import com.mealory.app.ui.components.MealoryLogo
 import com.mealory.app.ui.home.HomeScreen
 import com.mealory.app.ui.placeholder.PlaceholderScreen
@@ -59,6 +65,7 @@ import kotlinx.coroutines.delay
 private const val SplashRoute = "splash"
 private const val OnboardingRoute = "onboarding"
 private const val MainRoute = "main"
+private const val AddMealRoute = "add-meal"
 
 private data class TopLevelDestination(
     val route: String,
@@ -77,6 +84,7 @@ private val destinations = listOf(
 fun MealoryApp(viewModel: MealoryViewModel = viewModel()) {
     val navController = rememberNavController()
     val onboardingCompleted by viewModel.onboardingCompleted.collectAsStateWithLifecycle()
+    var showSavedMessage by rememberSaveable { mutableStateOf(false) }
 
     NavHost(navController = navController, startDestination = SplashRoute) {
         composable(SplashRoute) {
@@ -101,7 +109,23 @@ fun MealoryApp(viewModel: MealoryViewModel = viewModel()) {
             )
         }
         composable(MainRoute) {
-            MainShell()
+            MainShell(
+                showSavedMessage = showSavedMessage,
+                onSavedMessageShown = { showSavedMessage = false },
+                onAddMeal = { mode -> navController.navigate("$AddMealRoute/${mode.name}") },
+            )
+        }
+        composable(
+            route = "$AddMealRoute/{mode}",
+            arguments = listOf(navArgument("mode") { type = NavType.StringType }),
+        ) {
+            AddMealScreen(
+                onCancel = { navController.popBackStack() },
+                onSaved = {
+                    showSavedMessage = true
+                    navController.popBackStack()
+                },
+            )
         }
     }
 }
@@ -200,13 +224,26 @@ private fun OnboardingScreen(onContinue: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MainShell() {
+private fun MainShell(
+    showSavedMessage: Boolean,
+    onSavedMessageShown: () -> Unit,
+    onAddMeal: (AddMealMode) -> Unit,
+) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: destinations.first().route
     var showAddMealSheet by rememberSaveable { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(showSavedMessage) {
+        if (showSavedMessage) {
+            snackbarHostState.showSnackbar("这一顿，记下了。")
+            onSavedMessageShown()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 destinations.forEach { destination ->
@@ -251,6 +288,9 @@ private fun MainShell() {
             composable("home") {
                 HomeScreen(
                     onAddMeal = { showAddMealSheet = true },
+                    onTakePhoto = { onAddMeal(AddMealMode.CAMERA) },
+                    onPickPhotos = { onAddMeal(AddMealMode.PICKER) },
+                    onNoPhoto = { onAddMeal(AddMealMode.NO_PHOTO) },
                     showAddMealSheet = showAddMealSheet,
                     onDismissAddMealSheet = { showAddMealSheet = false },
                 )

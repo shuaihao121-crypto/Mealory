@@ -54,7 +54,11 @@ class OnboardingTest {
         composeRule.onNodeWithText("拍照").assertIsDisplayed()
         composeRule.onNodeWithText("从相册选择").assertIsDisplayed()
         composeRule.onNodeWithText("无照片补记").assertIsDisplayed()
-        composeRule.onNodeWithText("取消").performClick()
+        composeRule.onNodeWithText("无照片补记").performClick()
+        composeRule.onNodeWithText("保存").assertIsDisplayed().performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("这一顿，记下了。").fetchSemanticsNodes().isNotEmpty()
+        }
 
         composeRule.onNodeWithContentDescription("日历", useUnmergedTree = true).performClick()
         composeRule.onNodeWithText("以后，每一天都会留下一张温暖的照片。").assertIsDisplayed()

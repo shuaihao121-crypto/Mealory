@@ -6,6 +6,8 @@ import com.mealory.app.data.database.entity.MealEntity
 import com.mealory.app.data.database.entity.MealPersonCrossRef
 import com.mealory.app.data.database.entity.MealPhotoEntity
 import com.mealory.app.data.database.entity.MealWithDetails
+import com.mealory.app.data.database.entity.PersonEntity
+import com.mealory.app.data.database.entity.PlaceEntity
 import kotlinx.coroutines.flow.Flow
 
 class MealRepository(
@@ -13,6 +15,8 @@ class MealRepository(
 ) {
     private val mealDao = database.mealDao()
     private val photoDao = database.mealPhotoDao()
+    private val personDao = database.personDao()
+    private val placeDao = database.placeDao()
 
     fun observeActiveMeals(): Flow<List<MealWithDetails>> = mealDao.observeActiveMeals()
 
@@ -23,6 +27,8 @@ class MealRepository(
     suspend fun createMeal(
         meal: MealEntity,
         photos: List<MealPhotoEntity> = emptyList(),
+        newPlace: PlaceEntity? = null,
+        newPeople: List<PersonEntity> = emptyList(),
         personIds: Set<String> = emptySet(),
     ) {
         require(meal.minuteOfDay in 0..1_439) { "minuteOfDay must be between 0 and 1439" }
@@ -34,6 +40,8 @@ class MealRepository(
         }
 
         database.withTransaction {
+            if (newPlace != null) placeDao.insert(newPlace)
+            newPeople.forEach { personDao.insert(it) }
             mealDao.insert(meal)
             if (photos.isNotEmpty()) photoDao.insertAll(photos)
             if (personIds.isNotEmpty()) {

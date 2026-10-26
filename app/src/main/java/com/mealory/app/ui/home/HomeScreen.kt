@@ -37,6 +37,9 @@ import com.mealory.app.ui.components.MealoryLogo
 @Composable
 fun HomeScreen(
     onAddMeal: () -> Unit,
+    onTakePhoto: () -> Unit,
+    onPickPhotos: () -> Unit,
+    onNoPhoto: () -> Unit,
     showAddMealSheet: Boolean,
     onDismissAddMealSheet: () -> Unit,
 ) {
@@ -98,11 +101,20 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
             )
-            MealEntryOption(Icons.Rounded.AddAPhoto, "拍照", onDismissAddMealSheet)
+            MealEntryOption(Icons.Rounded.AddAPhoto, "拍照") {
+                onDismissAddMealSheet()
+                onTakePhoto()
+            }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp))
-            MealEntryOption(Icons.Rounded.Image, "从相册选择", onDismissAddMealSheet)
+            MealEntryOption(Icons.Rounded.Image, "从相册选择") {
+                onDismissAddMealSheet()
+                onPickPhotos()
+            }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp))
-            MealEntryOption(Icons.Rounded.NoPhotography, "无照片补记", onDismissAddMealSheet)
+            MealEntryOption(Icons.Rounded.NoPhotography, "无照片补记") {
+                onDismissAddMealSheet()
+                onNoPhoto()
+            }
             TextButton(
                 onClick = onDismissAddMealSheet,
                 modifier = Modifier
