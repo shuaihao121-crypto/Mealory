@@ -1,0 +1,17 @@
+*.iml
+.gradle/
+.idea/
+local.properties
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+app/build/
+*.apk
+*.aab
+*.jks
+*.keystore
+tools/download-android-studio.ps1
+tools/download-in-parts.ps1
+tools/emulator-package.xml
+
