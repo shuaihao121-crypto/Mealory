@@ -69,7 +69,7 @@ com.mealory.app
 
 ### MealPhotoEntity
 
-`id`、`mealId`、`relativePath`、`sortOrder`、`width`、`height`、`fileSize`、`mimeType`、`originalTakenAt`、`createdAt`。索引 `mealId`；Meal 永久删除时级联删除行，但真实文件由受控文件清理流程处理。
+`id`、`mealId`、`relativePath`、`sortOrder`、`width`、`height`、`fileSize`、`mimeType`、`originalTakenAt`、`createdAt`。索引 `mealId`；Meal 永久删除时级联删除行，但真实文件由受控文件清理流程处理。`coverPhotoId` 的同餐照片约束由 Repository 在事务中校验，避免循环外键。
 
 ### PersonEntity / PlaceEntity
 

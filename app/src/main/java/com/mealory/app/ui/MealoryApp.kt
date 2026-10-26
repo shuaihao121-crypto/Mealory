@@ -44,6 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -72,14 +74,17 @@ private val destinations = listOf(
 )
 
 @Composable
-fun MealoryApp() {
+fun MealoryApp(viewModel: MealoryViewModel = viewModel()) {
     val navController = rememberNavController()
+    val onboardingCompleted by viewModel.onboardingCompleted.collectAsStateWithLifecycle()
 
     NavHost(navController = navController, startDestination = SplashRoute) {
         composable(SplashRoute) {
             SplashScreen(
+                ready = onboardingCompleted != null,
                 onFinished = {
-                    navController.navigate(OnboardingRoute) {
+                    val destination = if (onboardingCompleted == true) MainRoute else OnboardingRoute
+                    navController.navigate(destination) {
                         popUpTo(SplashRoute) { inclusive = true }
                     }
                 },
@@ -88,6 +93,7 @@ fun MealoryApp() {
         composable(OnboardingRoute) {
             OnboardingScreen(
                 onContinue = {
+                    viewModel.completeOnboarding()
                     navController.navigate(MainRoute) {
                         popUpTo(OnboardingRoute) { inclusive = true }
                     }
@@ -101,12 +107,17 @@ fun MealoryApp() {
 }
 
 @Composable
-private fun SplashScreen(onFinished: () -> Unit) {
+private fun SplashScreen(
+    ready: Boolean,
+    onFinished: () -> Unit,
+) {
     var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
+    LaunchedEffect(ready) {
         visible = true
-        delay(1_150)
-        onFinished()
+        if (ready) {
+            delay(1_150)
+            onFinished()
+        }
     }
 
     Box(

@@ -6,12 +6,24 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
 class OnboardingTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun resetOnboarding() {
+        val application = composeRule.activity.application as MealoryApplication
+        runBlocking {
+            application.container.settingsRepository.setOnboardingCompleted(false)
+        }
+        composeRule.activityRule.scenario.recreate()
+    }
 
     @Test
     fun onboardingAppearsAfterSplash() {
@@ -28,6 +40,15 @@ class OnboardingTest {
         }
         composeRule.onNodeWithText("开始记录").performClick()
         composeRule.onNodeWithText("从这一顿开始").assertIsDisplayed()
+
+        val application = composeRule.activity.application as MealoryApplication
+        runBlocking {
+            application.container.settingsRepository.settings.first { it.onboardingCompleted }
+        }
+        composeRule.activityRule.scenario.recreate()
+        composeRule.waitUntil(timeoutMillis = 4_000) {
+            composeRule.onAllNodesWithText("从这一顿开始").fetchSemanticsNodes().isNotEmpty()
+        }
 
         composeRule.onNodeWithText("记录第一顿饭").performClick()
         composeRule.onNodeWithText("拍照").assertIsDisplayed()

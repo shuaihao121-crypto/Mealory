@@ -74,3 +74,13 @@
 - 决策：插件与依赖解析优先使用阿里云的 Google/Maven Central/Gradle Plugin 镜像，并保留 `google()`、`mavenCentral()`、`gradlePluginPortal()` 作为回退；Gradle 分发包可从华为云镜像取得，但必须匹配 Gradle 官方 SHA-256。
 - 原因：当前网络对 GitHub 与部分 Google 大文件连接长时间无响应，官方源单独使用无法稳定完成首次构建。镜像仅改变传输路径，不改变锁定的坐标与校验值。
 
+## D-015 Room 使用 KSP 并提交 schema 历史
+
+- 决策：Room 2.8.4 通过 KSP 2.3.12 生成代码，`app/schemas` 纳入 Git。
+- 原因：AGP 9.4 使用内置 Kotlin；KSP 2.3 可直接兼容该构建模型。提交 schema 可以在后续版本自动验证数据库迁移。
+
+## D-016 coverPhotoId 由 Repository 维护一致性
+
+- 决策：`Meal.coverPhotoId` 不声明到 `MealPhoto` 的数据库外键，而由事务型 Repository 校验它必须指向同一 Meal 的照片。
+- 原因：Meal 与 MealPhoto 已存在反向外键，直接增加循环外键会让初始插入与删除顺序复杂化；Repository 约束保留一致性并方便 Phase 3 的原子照片保存。
+

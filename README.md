@@ -18,11 +18,12 @@ Mealory 是一款只属于用户自己的 Android 饮食回忆日记。
 
 - Kotlin + Jetpack Compose + Material 3
 - Single Activity + Navigation Compose
+- Room + DataStore + Coroutines
 - minSdk 26 / compileSdk 37 / targetSdk 37
 - Android Gradle Plugin 9.4.1 / Gradle 9.6.0
 - 单 `app` module
 
-后续阶段按 [ARCHITECTURE.md](ARCHITECTURE.md) 引入 ViewModel、StateFlow、Coroutines、Room、DataStore、Coil、Paging 3、WorkManager、Photo Picker、FileProvider 与 Storage Access Framework。
+后续阶段按 [ARCHITECTURE.md](ARCHITECTURE.md) 继续引入照片存储、Coil、Paging 3、WorkManager、Photo Picker、FileProvider 与 Storage Access Framework。
 
 ## 本地构建
 
