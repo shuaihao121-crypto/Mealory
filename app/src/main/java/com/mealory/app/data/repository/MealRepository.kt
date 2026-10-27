@@ -1,6 +1,9 @@
 package com.mealory.app.data.repository
 
 import androidx.room.withTransaction
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.mealory.app.data.database.MealoryDatabase
 import com.mealory.app.data.database.entity.MealEntity
 import com.mealory.app.data.database.entity.MealPersonCrossRef
@@ -21,6 +24,17 @@ class MealRepository(
     fun observeActiveMeals(): Flow<List<MealWithDetails>> = mealDao.observeActiveMeals()
 
     fun observeDeletedMeals(): Flow<List<MealWithDetails>> = mealDao.observeDeletedMeals()
+
+    fun observeMeal(mealId: String): Flow<MealWithDetails?> = mealDao.observeById(mealId)
+
+    fun pagedActiveMeals(query: String): Flow<PagingData<MealWithDetails>> = Pager(
+        config = PagingConfig(
+            pageSize = 30,
+            prefetchDistance = 10,
+            enablePlaceholders = false,
+        ),
+        pagingSourceFactory = { mealDao.pagingSource(query.escapeLikeQuery()) },
+    ).flow
 
     suspend fun getMeal(mealId: String): MealWithDetails? = mealDao.getById(mealId)
 
@@ -83,7 +97,18 @@ class MealRepository(
     suspend fun permanentlyDelete(mealId: String): Boolean =
         mealDao.permanentlyDelete(mealId) == 1
 
+    suspend fun setCoverPhoto(mealId: String, photoId: String, updatedAt: Long) {
+        check(mealDao.setCoverPhoto(mealId, photoId, updatedAt) == 1) {
+            "Photo does not belong to meal: $photoId"
+        }
+    }
+
     companion object {
         const val MAX_PHOTOS_PER_MEAL = 9
     }
 }
+
+private fun String.escapeLikeQuery(): String = trim()
+    .replace("\\", "\\\\")
+    .replace("%", "\\%")
+    .replace("_", "\\_")

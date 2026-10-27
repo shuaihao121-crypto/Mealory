@@ -21,6 +21,7 @@ class OnboardingTest {
         val application = composeRule.activity.application as MealoryApplication
         runBlocking {
             application.container.settingsRepository.setOnboardingCompleted(false)
+            application.container.database.clearAllTables()
         }
         composeRule.activityRule.scenario.recreate()
     }
@@ -39,6 +40,9 @@ class OnboardingTest {
             composeRule.onAllNodesWithText("开始记录").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("开始记录").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("从这一顿开始").fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithText("从这一顿开始").assertIsDisplayed()
 
         val application = composeRule.activity.application as MealoryApplication
@@ -58,6 +62,15 @@ class OnboardingTest {
         composeRule.onNodeWithText("保存").assertIsDisplayed().performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("这一顿，记下了。").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithContentDescription("打开这顿饭").performClick()
+        composeRule.onNodeWithText("这一顿").assertIsDisplayed()
+        composeRule.onNodeWithText("编辑").performClick()
+        composeRule.onNodeWithText("保存修改").assertIsDisplayed().performClick()
+        composeRule.onNodeWithContentDescription("删除").performClick()
+        composeRule.onNodeWithText("删除").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("从这一顿开始").fetchSemanticsNodes().isNotEmpty()
         }
 
         composeRule.onNodeWithContentDescription("日历", useUnmergedTree = true).performClick()

@@ -57,6 +57,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.mealory.app.ui.addmeal.AddMealMode
 import com.mealory.app.ui.addmeal.AddMealScreen
+import com.mealory.app.ui.mealdetail.MealDetailScreen
 import com.mealory.app.ui.components.MealoryLogo
 import com.mealory.app.ui.home.HomeScreen
 import com.mealory.app.ui.placeholder.PlaceholderScreen
@@ -66,6 +67,7 @@ private const val SplashRoute = "splash"
 private const val OnboardingRoute = "onboarding"
 private const val MainRoute = "main"
 private const val AddMealRoute = "add-meal"
+private const val MealDetailRoute = "meal-detail"
 
 private data class TopLevelDestination(
     val route: String,
@@ -113,6 +115,7 @@ fun MealoryApp(viewModel: MealoryViewModel = viewModel()) {
                 showSavedMessage = showSavedMessage,
                 onSavedMessageShown = { showSavedMessage = false },
                 onAddMeal = { mode -> navController.navigate("$AddMealRoute/${mode.name}") },
+                onMealClick = { mealId -> navController.navigate("$MealDetailRoute/$mealId") },
             )
         }
         composable(
@@ -125,6 +128,15 @@ fun MealoryApp(viewModel: MealoryViewModel = viewModel()) {
                     showSavedMessage = true
                     navController.popBackStack()
                 },
+            )
+        }
+        composable(
+            route = "$MealDetailRoute/{mealId}",
+            arguments = listOf(navArgument("mealId") { type = NavType.StringType }),
+        ) {
+            MealDetailScreen(
+                onBack = { navController.popBackStack() },
+                onDeleted = { navController.popBackStack() },
             )
         }
     }
@@ -228,6 +240,7 @@ private fun MainShell(
     showSavedMessage: Boolean,
     onSavedMessageShown: () -> Unit,
     onAddMeal: (AddMealMode) -> Unit,
+    onMealClick: (String) -> Unit,
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -291,6 +304,7 @@ private fun MainShell(
                     onTakePhoto = { onAddMeal(AddMealMode.CAMERA) },
                     onPickPhotos = { onAddMeal(AddMealMode.PICKER) },
                     onNoPhoto = { onAddMeal(AddMealMode.NO_PHOTO) },
+                    onMealClick = onMealClick,
                     showAddMealSheet = showAddMealSheet,
                     onDismissAddMealSheet = { showAddMealSheet = false },
                 )

@@ -2,6 +2,7 @@ package com.mealory.app.data
 
 import android.content.Context
 import androidx.room.Room
+import androidx.paging.PagingSource
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mealory.app.data.database.MealoryDatabase
@@ -98,15 +99,71 @@ class MealoryDatabaseTest {
         assertFalse(repository.permanentlyDelete(meal.id))
     }
 
+    @Test
+    fun pagingSearchesTitleNotePlaceAndPersonInTimelineOrder() = runTest {
+        val person = person("person-search", "小王")
+        val place = place("place-search", "一食堂")
+        database.personDao().insert(person)
+        database.placeDao().insert(place)
+        repository.createMeal(
+            meal(id = "older", placeId = place.id, coverPhotoId = null, title = "牛肉面", dateEpochDay = 20_385L),
+            personIds = setOf(person.id),
+        )
+        repository.createMeal(
+            meal(id = "newer", placeId = null, coverPhotoId = null, title = "火锅", dateEpochDay = 20_386L)
+                .copy(note = "青岛旅行"),
+        )
+
+        suspend fun search(query: String): List<String> {
+            val result = database.mealDao().pagingSource(query).load(
+                PagingSource.LoadParams.Refresh(key = null, loadSize = 30, placeholdersEnabled = false),
+            ) as PagingSource.LoadResult.Page
+            return result.data.map { it.meal.id }
+        }
+
+        assertEquals(listOf("newer", "older"), search(""))
+        assertEquals(listOf("older"), search("牛肉"))
+        assertEquals(listOf("older"), search("一食堂"))
+        assertEquals(listOf("older"), search("小王"))
+        assertEquals(listOf("newer"), search("青岛"))
+
+        repository.softDelete("newer", 9_000L)
+        assertTrue(search("青岛").isEmpty())
+    }
+
+    @Test
+    fun coverCanOnlyReferencePhotoFromSameMeal() = runTest {
+        val meal = meal(placeId = null, coverPhotoId = "photo-1")
+        repository.createMeal(
+            meal,
+            photos = listOf(
+                photo(meal.id, "photo-1"),
+                photo(meal.id, "photo-2").copy(sortOrder = 1),
+            ),
+        )
+        val otherMeal = meal(id = "meal-2", placeId = null, coverPhotoId = "other-photo")
+        repository.createMeal(otherMeal, photos = listOf(photo(otherMeal.id, "other-photo")))
+
+        repository.setCoverPhoto(meal.id, "photo-2", 5_000L)
+        assertEquals("photo-2", repository.getMeal(meal.id)!!.meal.coverPhotoId)
+
+        assertTrue(runCatching { repository.setCoverPhoto(meal.id, "missing", 6_000L) }.isFailure)
+        assertTrue(runCatching { repository.setCoverPhoto(meal.id, "other-photo", 7_000L) }.isFailure)
+        assertEquals("photo-2", repository.getMeal(meal.id)!!.meal.coverPhotoId)
+    }
+
     private fun meal(
+        id: String = "meal-1",
         placeId: String?,
         coverPhotoId: String?,
+        title: String = "牛肉面",
+        dateEpochDay: Long = 20_386L,
     ) = MealEntity(
-        id = "meal-1",
-        dateEpochDay = 20_386L,
+        id = id,
+        dateEpochDay = dateEpochDay,
         minuteOfDay = 18 * 60 + 42,
         mealType = MealType.DINNER,
-        title = "牛肉面",
+        title = title,
         note = null,
         placeId = placeId,
         coverPhotoId = coverPhotoId,
@@ -116,10 +173,10 @@ class MealoryDatabaseTest {
         deletedAt = null,
     )
 
-    private fun photo(mealId: String) = MealPhotoEntity(
-        id = "photo-1",
+    private fun photo(mealId: String, id: String = "photo-1") = MealPhotoEntity(
+        id = id,
         mealId = mealId,
-        relativePath = "Pictures/meals/2026/10/$mealId/photo-1.jpg",
+        relativePath = "pictures/meals/2026/10/$mealId/$id.jpg",
         sortOrder = 0,
         width = 2_560,
         height = 1_920,

@@ -67,7 +67,10 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.navigation:navigation-compose:2.10.2")
+    implementation("androidx.paging:paging-compose:3.5.3")
+    implementation("androidx.paging:paging-runtime-ktx:3.5.3")
     implementation("androidx.room:room-ktx:$roomVersion")
+    implementation("androidx.room:room-paging:$roomVersion")
     implementation("androidx.room:room-runtime:$roomVersion")
     // Coil 3.4+ is compiled against Kotlin newer than AGP 9.4's built-in Kotlin 2.2.10.
     //noinspection NewerVersionAvailable

@@ -1,6 +1,6 @@
 # Mealory 架构
 
-最后更新：2026-10-26
+最后更新：2026-10-27
 
 ## 1. 总体结构
 
@@ -91,6 +91,7 @@ UI 与查询以 `dateEpochDay + minuteOfDay + timeZoneId` 为真值。`createdAt
 - 最近删除过滤 `deletedAt IS NOT NULL`。
 - 首页由 Room PagingSource 驱动，日期头在 UI 层从分页项目派生。
 - 搜索通过 Meal + Place + Person 关联和参数化 `LIKE`，对 `%`/`_` 做转义。
+- Meal 详情使用按 ID 的 Room Flow；编辑、封面切换或软删除会使详情与首页 PagingSource 自动失效并刷新。
 - 日历先查询日期到代表照片映射，不加载全尺寸照片实体集合。
 - 随机一顿优先 30 天以前；避免在超大表上长期使用昂贵的 `ORDER BY RANDOM()`，实现时采用计数 + 偏移或候选窗口。
 
@@ -178,6 +179,6 @@ V1 仅完整替换：
 - Room JVM/instrumented：CRUD、关系、索引查询、软删除/恢复、分页、搜索、大数据。
 - 文件测试：EXIF、方向、标准/高质量、1/9 张、缺失/损坏文件。
 - 备份恢复：往返等价、损坏 JSON/ZIP、哈希错误、关系错误、中断与回滚。
-- Compose UI：Onboarding、四 Tab、空首页、记录入口、取消路径。
+- Compose UI：Onboarding、四 Tab、空首页、记录入口、首页到详情、编辑保存和删除确认。
 - 设备：模拟器做基础回归；真机验证系统相机、Photo Picker、SAF 与完整恢复。
 
