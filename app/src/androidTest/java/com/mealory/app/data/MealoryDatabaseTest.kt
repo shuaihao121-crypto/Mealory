@@ -152,6 +152,51 @@ class MealoryDatabaseTest {
         assertEquals("photo-2", repository.getMeal(meal.id)!!.meal.coverPhotoId)
     }
 
+    @Test
+    fun calendarPreviewsUseCoverAndDayQueryFiltersDeletedMeals() = runTest {
+        val breakfast = meal(
+            id = "breakfast",
+            placeId = null,
+            coverPhotoId = null,
+            title = "早餐",
+            dateEpochDay = 20_400L,
+        ).copy(minuteOfDay = 8 * 60)
+        val dinner = meal(
+            id = "dinner",
+            placeId = null,
+            coverPhotoId = "dinner-cover",
+            title = "晚餐",
+            dateEpochDay = 20_400L,
+        ).copy(minuteOfDay = 19 * 60)
+        val deleted = meal(
+            id = "deleted-calendar",
+            placeId = null,
+            coverPhotoId = null,
+            title = "已删除",
+            dateEpochDay = 20_401L,
+        )
+
+        repository.createMeal(breakfast)
+        repository.createMeal(
+            dinner,
+            photos = listOf(
+                photo(dinner.id, "dinner-first"),
+                photo(dinner.id, "dinner-cover").copy(sortOrder = 1),
+            ),
+        )
+        repository.createMeal(deleted)
+        repository.softDelete(deleted.id, 8_000L)
+
+        val previews = repository.observeCalendarPreviews(20_400L, 20_402L).first()
+        assertEquals(listOf("breakfast", "dinner"), previews.map { it.mealId })
+        assertNull(previews.first().coverRelativePath)
+        assertTrue(previews.last().coverRelativePath!!.endsWith("dinner-cover.jpg"))
+
+        val dayMeals = repository.observeMealsForDay(20_400L).first()
+        assertEquals(listOf("breakfast", "dinner"), dayMeals.map { it.meal.id })
+        assertTrue(repository.observeMealsForDay(20_401L).first().isEmpty())
+    }
+
     private fun meal(
         id: String = "meal-1",
         placeId: String?,

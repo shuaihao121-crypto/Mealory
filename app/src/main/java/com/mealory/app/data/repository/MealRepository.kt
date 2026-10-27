@@ -5,6 +5,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.mealory.app.data.database.MealoryDatabase
+import com.mealory.app.data.database.entity.CalendarMealPreview
 import com.mealory.app.data.database.entity.MealEntity
 import com.mealory.app.data.database.entity.MealPersonCrossRef
 import com.mealory.app.data.database.entity.MealPhotoEntity
@@ -35,6 +36,15 @@ class MealRepository(
         ),
         pagingSourceFactory = { mealDao.pagingSource(query.escapeLikeQuery()) },
     ).flow
+
+    fun observeCalendarPreviews(
+        startEpochDay: Long,
+        endEpochDayExclusive: Long,
+    ): Flow<List<CalendarMealPreview>> =
+        mealDao.observeCalendarPreviews(startEpochDay, endEpochDayExclusive)
+
+    fun observeMealsForDay(epochDay: Long): Flow<List<MealWithDetails>> =
+        mealDao.observeMealsForDay(epochDay)
 
     suspend fun getMeal(mealId: String): MealWithDetails? = mealDao.getById(mealId)
 

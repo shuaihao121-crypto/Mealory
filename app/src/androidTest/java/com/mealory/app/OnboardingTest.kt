@@ -6,6 +6,10 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.mealory.app.data.database.entity.MealEntity
+import com.mealory.app.data.database.entity.MealType
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.first
 import org.junit.Before
@@ -73,8 +77,35 @@ class OnboardingTest {
             composeRule.onAllNodesWithText("从这一顿开始").fetchSemanticsNodes().isNotEmpty()
         }
 
+        val today = LocalDate.now()
+        runBlocking {
+            application.container.mealRepository.createMeal(
+                MealEntity(
+                    id = "calendar-ui-meal",
+                    dateEpochDay = today.toEpochDay(),
+                    minuteOfDay = 12 * 60,
+                    mealType = MealType.LUNCH,
+                    title = "日历测试",
+                    note = null,
+                    placeId = null,
+                    coverPhotoId = null,
+                    timeZoneId = ZoneId.systemDefault().id,
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis(),
+                    deletedAt = null,
+                ),
+            )
+        }
+
         composeRule.onNodeWithContentDescription("日历", useUnmergedTree = true).performClick()
-        composeRule.onNodeWithText("以后，每一天都会留下一张温暖的照片。").assertIsDisplayed()
+        composeRule.onNodeWithText("月视图").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("$today，1顿饭").performClick()
+        composeRule.onNodeWithText("查看这一天").assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("日历测试").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("返回").performClick()
+        composeRule.onNodeWithText("年视图").performClick()
+        composeRule.onNodeWithText("1月").assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("月视图").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("回忆", useUnmergedTree = true).performClick()
         composeRule.onNodeWithText("Mealory 会在合适的时候，把过去轻轻带回来。").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("我的", useUnmergedTree = true).performClick()

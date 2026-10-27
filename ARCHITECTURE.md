@@ -92,7 +92,8 @@ UI 与查询以 `dateEpochDay + minuteOfDay + timeZoneId` 为真值。`createdAt
 - 首页由 Room PagingSource 驱动，日期头在 UI 层从分页项目派生。
 - 搜索通过 Meal + Place + Person 关联和参数化 `LIKE`，对 `%`/`_` 做转义。
 - Meal 详情使用按 ID 的 Room Flow；编辑、封面切换或软删除会使详情与首页 PagingSource 自动失效并刷新。
-- 日历先查询日期到代表照片映射，不加载全尺寸照片实体集合。
+- 日历使用 `CalendarMealPreview` 时间范围投影，只读取 Meal ID、当地日期/时间、餐次、饭名与代表照片相对路径；月/年视图不会加载完整关系集合。
+- 日期详情再通过按 `dateEpochDay` 的事务型 Flow 加载当天 `MealWithDetails`，并按当地时间升序显示。
 - 随机一顿优先 30 天以前；避免在超大表上长期使用昂贵的 `ORDER BY RANDOM()`，实现时采用计数 + 偏移或候选窗口。
 
 ## 6. 照片生命周期
@@ -176,7 +177,7 @@ V1 仅完整替换：
 ## 12. 测试策略
 
 - 纯单元：餐次推断、时间/日期、回忆候选、统计、备份模型验证。
-- Room JVM/instrumented：CRUD、关系、索引查询、软删除/恢复、分页、搜索、大数据。
+- Room JVM/instrumented：CRUD、关系、索引查询、软删除/恢复、分页、搜索、日历范围/日期查询、大数据。
 - 文件测试：EXIF、方向、标准/高质量、1/9 张、缺失/损坏文件。
 - 备份恢复：往返等价、损坏 JSON/ZIP、哈希错误、关系错误、中断与回滚。
 - Compose UI：Onboarding、四 Tab、空首页、记录入口、首页到详情、编辑保存和删除确认。

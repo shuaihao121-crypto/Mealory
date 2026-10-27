@@ -57,9 +57,11 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.mealory.app.ui.addmeal.AddMealMode
 import com.mealory.app.ui.addmeal.AddMealScreen
-import com.mealory.app.ui.mealdetail.MealDetailScreen
+import com.mealory.app.ui.calendar.CalendarScreen
+import com.mealory.app.ui.calendar.DateDetailScreen
 import com.mealory.app.ui.components.MealoryLogo
 import com.mealory.app.ui.home.HomeScreen
+import com.mealory.app.ui.mealdetail.MealDetailScreen
 import com.mealory.app.ui.placeholder.PlaceholderScreen
 import kotlinx.coroutines.delay
 
@@ -68,6 +70,7 @@ private const val OnboardingRoute = "onboarding"
 private const val MainRoute = "main"
 private const val AddMealRoute = "add-meal"
 private const val MealDetailRoute = "meal-detail"
+private const val DateDetailRoute = "date-detail"
 
 private data class TopLevelDestination(
     val route: String,
@@ -116,6 +119,7 @@ fun MealoryApp(viewModel: MealoryViewModel = viewModel()) {
                 onSavedMessageShown = { showSavedMessage = false },
                 onAddMeal = { mode -> navController.navigate("$AddMealRoute/${mode.name}") },
                 onMealClick = { mealId -> navController.navigate("$MealDetailRoute/$mealId") },
+                onOpenDay = { epochDay -> navController.navigate("$DateDetailRoute/$epochDay") },
             )
         }
         composable(
@@ -137,6 +141,15 @@ fun MealoryApp(viewModel: MealoryViewModel = viewModel()) {
             MealDetailScreen(
                 onBack = { navController.popBackStack() },
                 onDeleted = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = "$DateDetailRoute/{epochDay}",
+            arguments = listOf(navArgument("epochDay") { type = NavType.LongType }),
+        ) {
+            DateDetailScreen(
+                onBack = { navController.popBackStack() },
+                onMealClick = { mealId -> navController.navigate("$MealDetailRoute/$mealId") },
             )
         }
     }
@@ -241,6 +254,7 @@ private fun MainShell(
     onSavedMessageShown: () -> Unit,
     onAddMeal: (AddMealMode) -> Unit,
     onMealClick: (String) -> Unit,
+    onOpenDay: (Long) -> Unit,
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -310,10 +324,9 @@ private fun MainShell(
                 )
             }
             composable("calendar") {
-                PlaceholderScreen(
-                    title = "日历",
-                    message = "以后，每一天都会留下一张温暖的照片。",
-                    icon = Icons.Rounded.CalendarMonth,
+                CalendarScreen(
+                    onMealClick = onMealClick,
+                    onOpenDay = onOpenDay,
                 )
             }
             composable("memories") {

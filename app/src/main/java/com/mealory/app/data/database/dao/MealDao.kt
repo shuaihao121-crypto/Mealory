@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.paging.PagingSource
+import com.mealory.app.data.database.entity.CalendarMealPreview
 import com.mealory.app.data.database.entity.MealEntity
 import com.mealory.app.data.database.entity.MealPersonCrossRef
 import com.mealory.app.data.database.entity.MealWithDetails
@@ -47,6 +48,53 @@ interface MealDao {
         """,
     )
     fun pagingSource(query: String): PagingSource<Int, MealWithDetails>
+
+    @Query(
+        """
+        SELECT
+            meals.id AS mealId,
+            meals.dateEpochDay AS dateEpochDay,
+            meals.minuteOfDay AS minuteOfDay,
+            meals.mealType AS mealType,
+            meals.title AS title,
+            COALESCE(
+                (
+                    SELECT cover_photo.relativePath
+                    FROM meal_photos AS cover_photo
+                    WHERE cover_photo.id = meals.coverPhotoId
+                      AND cover_photo.mealId = meals.id
+                    LIMIT 1
+                ),
+                (
+                SELECT meal_photos.relativePath
+                FROM meal_photos
+                WHERE meal_photos.mealId = meals.id
+                ORDER BY meal_photos.sortOrder ASC,
+                         meal_photos.createdAt ASC
+                LIMIT 1
+                )
+            ) AS coverRelativePath
+        FROM meals
+        WHERE meals.deletedAt IS NULL
+          AND meals.dateEpochDay >= :startEpochDay
+          AND meals.dateEpochDay < :endEpochDayExclusive
+        ORDER BY meals.dateEpochDay ASC, meals.minuteOfDay ASC, meals.createdAt ASC
+        """,
+    )
+    fun observeCalendarPreviews(
+        startEpochDay: Long,
+        endEpochDayExclusive: Long,
+    ): Flow<List<CalendarMealPreview>>
+
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM meals
+        WHERE deletedAt IS NULL AND dateEpochDay = :epochDay
+        ORDER BY minuteOfDay ASC, createdAt ASC
+        """,
+    )
+    fun observeMealsForDay(epochDay: Long): Flow<List<MealWithDetails>>
 
     @Transaction
     @Query(
