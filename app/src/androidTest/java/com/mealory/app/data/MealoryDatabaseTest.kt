@@ -197,6 +197,49 @@ class MealoryDatabaseTest {
         assertTrue(repository.observeMealsForDay(20_401L).first().isEmpty())
     }
 
+    @Test
+    fun peopleAndPlacesAreReusedAndSummariesTrackActiveMeals() = runTest {
+        val firstMeal = meal(
+            id = "tag-meal-1",
+            placeId = null,
+            coverPhotoId = null,
+            dateEpochDay = 20_410L,
+        )
+        val secondMeal = meal(
+            id = "tag-meal-2",
+            placeId = null,
+            coverPhotoId = null,
+            dateEpochDay = 20_411L,
+        )
+        repository.createMeal(firstMeal)
+        repository.createMeal(secondMeal)
+        repository.updateMealWithTags(firstMeal, "家", listOf("妈妈", "爸爸"))
+        repository.updateMealWithTags(secondMeal, " 家 ", listOf("妈妈", " 妈妈 "))
+
+        val people = repository.observePeople().first()
+        val places = repository.observePlaces().first()
+        assertEquals(setOf("妈妈", "爸爸"), people.map { it.name }.toSet())
+        assertEquals(listOf("家"), places.map { it.name })
+
+        val personSummaries = repository.observePersonSummaries().first()
+        assertEquals("妈妈", personSummaries.first().name)
+        assertEquals(2L, personSummaries.first().mealCount)
+        assertEquals(20_410L, personSummaries.first().firstDateEpochDay)
+        assertEquals(20_411L, personSummaries.first().lastDateEpochDay)
+        assertEquals(2L, repository.observePlaceSummaries().first().single().mealCount)
+        assertEquals("tag-meal-2", repository.observeMealsForPerson(personSummaries.first().id).first().first().meal.id)
+        assertEquals("家", repository.observeRecentlyUsedPlaces().first().single().name)
+
+        repository.renamePerson(personSummaries.first().id, "母亲")
+        repository.renamePlace(places.single().id, "家里")
+        assertEquals("母亲", repository.observePerson(personSummaries.first().id).first()!!.name)
+        assertEquals("家里", repository.observePlace(places.single().id).first()!!.name)
+
+        repository.softDelete(secondMeal.id, 9_000L)
+        assertEquals(1L, repository.observePersonSummaries().first().first { it.id == personSummaries.first().id }.mealCount)
+        assertEquals(1L, repository.observePlaceSummaries().first().single().mealCount)
+    }
+
     private fun meal(
         id: String = "meal-1",
         placeId: String?,

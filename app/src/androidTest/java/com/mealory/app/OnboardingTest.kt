@@ -78,22 +78,26 @@ class OnboardingTest {
         }
 
         val today = LocalDate.now()
+        val calendarMeal = MealEntity(
+            id = "calendar-ui-meal",
+            dateEpochDay = today.toEpochDay(),
+            minuteOfDay = 12 * 60,
+            mealType = MealType.LUNCH,
+            title = "日历测试",
+            note = null,
+            placeId = null,
+            coverPhotoId = null,
+            timeZoneId = ZoneId.systemDefault().id,
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis(),
+            deletedAt = null,
+        )
         runBlocking {
-            application.container.mealRepository.createMeal(
-                MealEntity(
-                    id = "calendar-ui-meal",
-                    dateEpochDay = today.toEpochDay(),
-                    minuteOfDay = 12 * 60,
-                    mealType = MealType.LUNCH,
-                    title = "日历测试",
-                    note = null,
-                    placeId = null,
-                    coverPhotoId = null,
-                    timeZoneId = ZoneId.systemDefault().id,
-                    createdAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis(),
-                    deletedAt = null,
-                ),
+            application.container.mealRepository.createMeal(calendarMeal)
+            application.container.mealRepository.updateMealWithTags(
+                meal = calendarMeal,
+                placeName = "一食堂",
+                peopleNames = listOf("小王"),
             )
         }
 
@@ -109,7 +113,12 @@ class OnboardingTest {
         composeRule.onNodeWithContentDescription("回忆", useUnmergedTree = true).performClick()
         composeRule.onNodeWithText("Mealory 会在合适的时候，把过去轻轻带回来。").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("我的", useUnmergedTree = true).performClick()
-        composeRule.onNodeWithText("人物、地点、备份和外观设置会安静地放在这里。").assertIsDisplayed()
+        composeRule.onNodeWithText("人物和地点只是你自己的本地标签。").assertIsDisplayed()
+        composeRule.onNodeWithText("人物").assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("小王").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("返回").performClick()
+        composeRule.onNodeWithText("地点").assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("一食堂").assertIsDisplayed()
     }
 }
 

@@ -77,6 +77,20 @@ class MealRecorderTest {
         assertEquals(setOf("小王", "妈妈"), saved.people.map { it.name }.toSet())
         assertTrue(saved.photos.isEmpty())
         assertNull(saved.meal.coverPhotoId)
+
+        recorder.record(
+            MealRecordDraft(
+                date = LocalDate.of(2026, 10, 27),
+                minuteOfDay = 18 * 60,
+                mealType = MealType.DINNER,
+                placeName = "一食堂",
+                peopleNames = listOf("小王", "妈妈"),
+            ),
+        )
+        assertEquals(1, repository.observePlaces().first().size)
+        assertEquals(2, repository.observePeople().first().size)
+        assertEquals(2L, repository.observePlaceSummaries().first().single().mealCount)
+        assertEquals(2L, repository.observePersonSummaries().first().first().mealCount)
     }
 
     @Test

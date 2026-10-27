@@ -66,6 +66,8 @@ fun AddMealScreen(
     viewModel: AddMealViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val availablePeople by viewModel.availablePeople.collectAsStateWithLifecycle()
+    val recentPlaces by viewModel.recentPlaces.collectAsStateWithLifecycle()
     var initialActionLaunched by rememberSaveable { mutableStateOf(false) }
 
     val photoPicker = rememberLauncherForActivityResult(
@@ -157,23 +159,55 @@ fun AddMealScreen(
                 )
             }
             item {
-                OutlinedTextField(
-                    value = state.place,
-                    onValueChange = viewModel::setPlace,
-                    label = { Text("地点") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (recentPlaces.isNotEmpty()) {
+                        Text("最近使用地点", style = MaterialTheme.typography.titleSmall)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(recentPlaces.size) { index ->
+                                val place = recentPlaces[index]
+                                FilterChip(
+                                    selected = state.place.equals(place.name, ignoreCase = true),
+                                    onClick = { viewModel.setPlace(place.name) },
+                                    label = { Text(place.name) },
+                                )
+                            }
+                        }
+                    }
+                    OutlinedTextField(
+                        value = state.place,
+                        onValueChange = viewModel::setPlace,
+                        label = { Text("地点") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                }
             }
             item {
-                OutlinedTextField(
-                    value = state.people,
-                    onValueChange = viewModel::setPeople,
-                    label = { Text("和谁一起") },
-                    supportingText = { Text("多人可用逗号分隔") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = state.people,
+                        onValueChange = viewModel::setPeople,
+                        label = { Text("和谁一起") },
+                        supportingText = { Text("多人可用逗号分隔") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                    if (availablePeople.isNotEmpty()) {
+                        Text("选择人物", style = MaterialTheme.typography.titleSmall)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(availablePeople.size) { index ->
+                                val person = availablePeople[index]
+                                val selected = state.people.split('，', ',')
+                                    .any { it.trim().equals(person.name, ignoreCase = true) }
+                                FilterChip(
+                                    selected = selected,
+                                    onClick = { viewModel.togglePerson(person.name) },
+                                    label = { Text(person.name) },
+                                )
+                            }
+                        }
+                    }
+                }
             }
             item {
                 OutlinedTextField(

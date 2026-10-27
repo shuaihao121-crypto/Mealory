@@ -43,6 +43,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.mealory.app.data.database.entity.MealType
+import com.mealory.app.data.database.entity.PersonEntity
+import com.mealory.app.data.database.entity.PlaceEntity
 import java.io.File
 import java.time.LocalDate
 
@@ -55,6 +57,8 @@ fun MealDetailScreen(
 ) {
     val details by viewModel.meal.collectAsStateWithLifecycle()
     val deleted by viewModel.deleted.collectAsStateWithLifecycle()
+    val availablePeople by viewModel.people.collectAsStateWithLifecycle()
+    val availablePlaces by viewModel.places.collectAsStateWithLifecycle()
     var editing by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
 
@@ -85,8 +89,10 @@ fun MealDetailScreen(
             DetailContent(
                 details = meal,
                 editing = editing,
-                onSave = { date, minute, type, title, note ->
-                    viewModel.saveEdits(date, minute, type, title, note)
+                availablePeople = availablePeople,
+                availablePlaces = availablePlaces,
+                onSave = { date, minute, type, title, note, place, people ->
+                    viewModel.saveEdits(date, minute, type, title, note, place, people)
                     editing = false
                 },
                 onSetCover = viewModel::setCover,
@@ -112,7 +118,9 @@ fun MealDetailScreen(
 private fun DetailContent(
     details: com.mealory.app.data.database.entity.MealWithDetails,
     editing: Boolean,
-    onSave: (LocalDate, Int, MealType, String, String) -> Unit,
+    availablePeople: List<PersonEntity>,
+    availablePlaces: List<PlaceEntity>,
+    onSave: (LocalDate, Int, MealType, String, String, String, String) -> Unit,
     onSetCover: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -125,6 +133,10 @@ private fun DetailContent(
     var type by remember(meal.id, meal.updatedAt) { mutableStateOf(meal.mealType) }
     var title by remember(meal.id, meal.updatedAt) { mutableStateOf(meal.title.orEmpty()) }
     var note by remember(meal.id, meal.updatedAt) { mutableStateOf(meal.note.orEmpty()) }
+    var placeName by remember(meal.id, meal.updatedAt) { mutableStateOf(details.place?.name.orEmpty()) }
+    var peopleNames by remember(meal.id, meal.updatedAt) {
+        mutableStateOf(details.people.joinToString("，") { it.name })
+    }
     val pagerState = rememberPagerState(pageCount = { details.photos.size })
 
     Column(
@@ -171,6 +183,45 @@ private fun DetailContent(
                 OutlinedTextField(timeText, { timeText = it }, label = { Text("时间") }, modifier = Modifier.weight(1f))
             }
             OutlinedTextField(title, { title = it }, label = { Text("吃了什么") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(placeName, { placeName = it }, label = { Text("地点") }, modifier = Modifier.fillMaxWidth())
+            if (availablePlaces.isNotEmpty()) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(availablePlaces) { place ->
+                        FilterChip(
+                            selected = placeName.equals(place.name, ignoreCase = true),
+                            onClick = { placeName = place.name },
+                            label = { Text(place.name) },
+                        )
+                    }
+                }
+            }
+            OutlinedTextField(
+                peopleNames,
+                { peopleNames = it },
+                label = { Text("和谁一起") },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (availablePeople.isNotEmpty()) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(availablePeople) { person ->
+                        val selected = peopleNames.split('，', ',')
+                            .any { it.trim().equals(person.name, ignoreCase = true) }
+                        FilterChip(
+                            selected = selected,
+                            onClick = {
+                                val names = peopleNames.split('，', ',')
+                                    .map(String::trim)
+                                    .filter(String::isNotEmpty)
+                                    .toMutableList()
+                                val index = names.indexOfFirst { it.equals(person.name, ignoreCase = true) }
+                                if (index >= 0) names.removeAt(index) else names += person.name
+                                peopleNames = names.joinToString("，")
+                            },
+                            label = { Text(person.name) },
+                        )
+                    }
+                }
+            }
             OutlinedTextField(note, { note = it }, label = { Text("备注") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
             TextButton(
                 onClick = {
@@ -180,7 +231,7 @@ private fun DetailContent(
                         ?.plus(parts.getOrNull(1)?.toIntOrNull() ?: 0)
                         ?.takeIf { it in 0..1_439 }
                         ?: meal.minuteOfDay
-                    onSave(date, minute, type, title, note)
+                    onSave(date, minute, type, title, note, placeName, peopleNames)
                 },
             ) { Text("保存修改") }
         } else {

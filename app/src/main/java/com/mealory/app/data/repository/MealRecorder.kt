@@ -13,6 +13,7 @@ import com.mealory.app.storage.PreparedPhoto
 import java.io.File
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.Locale
 import java.util.UUID
 
 data class MealPhotoSource(
@@ -64,14 +65,23 @@ class MealRecorder(
         try {
             prepared.forEach(photoStorage::commit)
             val now = System.currentTimeMillis()
-            val place = draft.placeName.trim().takeIf(String::isNotEmpty)?.let { name ->
+            val placeName = draft.placeName.trim().replace(Regex("\\s+"), " ")
+            val existingPlace = placeName.takeIf(String::isNotEmpty)?.let { repository.findPlaceByName(it) }
+            val newPlace = placeName.takeIf { it.isNotEmpty() && existingPlace == null }?.let { name ->
                 PlaceEntity(UUID.randomUUID().toString(), name, now, now)
             }
-            val people = draft.peopleNames
-                .map(String::trim)
+            val place = existingPlace ?: newPlace
+            val requestedPeople = draft.peopleNames
+                .map { it.trim().replace(Regex("\\s+"), " ") }
                 .filter(String::isNotEmpty)
-                .distinct()
-                .map { name -> PersonEntity(UUID.randomUUID().toString(), name, now, now) }
+                .distinctBy { it.lowercase(Locale.ROOT) }
+            val people = mutableListOf<PersonEntity>()
+            val newPeople = mutableListOf<PersonEntity>()
+            requestedPeople.forEach { name ->
+                val person = repository.findPersonByName(name)
+                    ?: PersonEntity(UUID.randomUUID().toString(), name, now, now).also(newPeople::add)
+                people += person
+            }
             val photoEntities = prepared.mapIndexed { index, photo ->
                 MealPhotoEntity(
                     id = photo.id,
@@ -103,8 +113,8 @@ class MealRecorder(
             repository.createMeal(
                 meal = meal,
                 photos = photoEntities,
-                newPlace = place,
-                newPeople = people,
+                newPlace = newPlace,
+                newPeople = newPeople,
                 personIds = people.map { it.id }.toSet(),
             )
             draft.photos.forEach { it.disposableFile?.delete() }

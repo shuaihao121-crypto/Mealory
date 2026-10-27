@@ -7,6 +7,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.mealory.app.MealoryApplication
 import com.mealory.app.data.database.entity.MealType
+import com.mealory.app.data.database.entity.PersonEntity
+import com.mealory.app.data.database.entity.PlaceEntity
 import com.mealory.app.data.repository.MealPhotoSource
 import com.mealory.app.data.repository.MealRecordDraft
 import com.mealory.app.storage.CameraCapture
@@ -18,9 +20,11 @@ import java.time.LocalTime
 import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,6 +64,10 @@ class AddMealViewModel(
     private val container = (application as MealoryApplication).container
     private val _state = MutableStateFlow(AddMealUiState())
     val state: StateFlow<AddMealUiState> = _state.asStateFlow()
+    val availablePeople: StateFlow<List<PersonEntity>> = container.mealRepository.observePeople()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val recentPlaces: StateFlow<List<PlaceEntity>> = container.mealRepository.observeRecentlyUsedPlaces()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val initialMode: AddMealMode = runCatching {
         AddMealMode.valueOf(savedStateHandle.get<String>("mode") ?: AddMealMode.NO_PHOTO.name)
@@ -153,6 +161,15 @@ class AddMealViewModel(
     fun setTitle(value: String) = _state.update { it.copy(title = value) }
     fun setPlace(value: String) = _state.update { it.copy(place = value) }
     fun setPeople(value: String) = _state.update { it.copy(people = value) }
+    fun togglePerson(name: String) = _state.update { current ->
+        val names = current.people.split('，', ',')
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+            .toMutableList()
+        val existingIndex = names.indexOfFirst { it.equals(name, ignoreCase = true) }
+        if (existingIndex >= 0) names.removeAt(existingIndex) else names += name
+        current.copy(people = names.joinToString("，"))
+    }
     fun setNote(value: String) = _state.update { it.copy(note = value) }
 
     fun save() {

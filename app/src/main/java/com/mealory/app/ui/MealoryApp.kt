@@ -63,6 +63,11 @@ import com.mealory.app.ui.components.MealoryLogo
 import com.mealory.app.ui.home.HomeScreen
 import com.mealory.app.ui.mealdetail.MealDetailScreen
 import com.mealory.app.ui.placeholder.PlaceholderScreen
+import com.mealory.app.ui.profile.ProfileScreen
+import com.mealory.app.ui.tags.PeopleScreen
+import com.mealory.app.ui.tags.PersonDetailScreen
+import com.mealory.app.ui.tags.PlaceDetailScreen
+import com.mealory.app.ui.tags.PlacesScreen
 import kotlinx.coroutines.delay
 
 private const val SplashRoute = "splash"
@@ -337,10 +342,39 @@ private fun MainShell(
                 )
             }
             composable("profile") {
-                PlaceholderScreen(
-                    title = "我的",
-                    message = "人物、地点、备份和外观设置会安静地放在这里。",
-                    icon = Icons.Rounded.PersonOutline,
+                ProfileScreen(
+                    onPeople = { navController.navigate("people") },
+                    onPlaces = { navController.navigate("places") },
+                )
+            }
+            composable("people") {
+                PeopleScreen(
+                    onBack = { navController.popBackStack() },
+                    onPersonClick = { navController.navigate("person/$it") },
+                )
+            }
+            composable(
+                route = "person/{personId}",
+                arguments = listOf(navArgument("personId") { type = NavType.StringType }),
+            ) {
+                PersonDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onMealClick = onMealClick,
+                )
+            }
+            composable("places") {
+                PlacesScreen(
+                    onBack = { navController.popBackStack() },
+                    onPlaceClick = { navController.navigate("place/$it") },
+                )
+            }
+            composable(
+                route = "place/{placeId}",
+                arguments = listOf(navArgument("placeId") { type = NavType.StringType }),
+            ) {
+                PlaceDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onMealClick = onMealClick,
                 )
             }
         }

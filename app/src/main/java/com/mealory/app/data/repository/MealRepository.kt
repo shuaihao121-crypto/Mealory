@@ -11,7 +11,11 @@ import com.mealory.app.data.database.entity.MealPersonCrossRef
 import com.mealory.app.data.database.entity.MealPhotoEntity
 import com.mealory.app.data.database.entity.MealWithDetails
 import com.mealory.app.data.database.entity.PersonEntity
+import com.mealory.app.data.database.entity.PersonSummary
 import com.mealory.app.data.database.entity.PlaceEntity
+import com.mealory.app.data.database.entity.PlaceSummary
+import java.util.Locale
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 class MealRepository(
@@ -46,7 +50,104 @@ class MealRepository(
     fun observeMealsForDay(epochDay: Long): Flow<List<MealWithDetails>> =
         mealDao.observeMealsForDay(epochDay)
 
+    fun observePeople(): Flow<List<PersonEntity>> = personDao.observeAll()
+
+    fun observePersonSummaries(): Flow<List<PersonSummary>> = personDao.observeSummaries()
+
+    fun observePerson(personId: String): Flow<PersonEntity?> = personDao.observeById(personId)
+
+    fun observeMealsForPerson(personId: String): Flow<List<MealWithDetails>> = personDao.observeMeals(personId)
+
+    fun observePlaces(): Flow<List<PlaceEntity>> = placeDao.observeAll()
+
+    fun observePlaceSummaries(): Flow<List<PlaceSummary>> = placeDao.observeSummaries()
+
+    fun observePlace(placeId: String): Flow<PlaceEntity?> = placeDao.observeById(placeId)
+
+    fun observeMealsForPlace(placeId: String): Flow<List<MealWithDetails>> = placeDao.observeMeals(placeId)
+
+    fun observeRecentlyUsedPlaces(limit: Int = 5): Flow<List<PlaceEntity>> =
+        placeDao.observeRecentlyUsed(limit)
+
     suspend fun getMeal(mealId: String): MealWithDetails? = mealDao.getById(mealId)
+
+    suspend fun findPersonByName(name: String): PersonEntity? =
+        name.normalizedName().takeIf(String::isNotEmpty)?.let { personDao.getByName(it) }
+
+    suspend fun findPlaceByName(name: String): PlaceEntity? =
+        name.normalizedName().takeIf(String::isNotEmpty)?.let { placeDao.getByName(it) }
+
+    suspend fun createPerson(name: String): String = database.withTransaction {
+        val normalized = name.normalizedName()
+        require(normalized.isNotEmpty()) { "Person name cannot be blank" }
+        personDao.getByName(normalized)?.id ?: UUID.randomUUID().toString().also { id ->
+            val now = System.currentTimeMillis()
+            personDao.insert(PersonEntity(id, normalized, now, now))
+        }
+    }
+
+    suspend fun renamePerson(personId: String, name: String) = database.withTransaction {
+        val normalized = name.normalizedName()
+        require(normalized.isNotEmpty()) { "Person name cannot be blank" }
+        val current = checkNotNull(personDao.getById(personId)) { "Person does not exist: $personId" }
+        val duplicate = personDao.getByName(normalized)
+        require(duplicate == null || duplicate.id == personId) { "Person already exists: $normalized" }
+        check(personDao.update(current.copy(name = normalized, updatedAt = System.currentTimeMillis())) == 1)
+    }
+
+    suspend fun deletePerson(personId: String): Boolean = personDao.deleteById(personId) == 1
+
+    suspend fun createPlace(name: String): String = database.withTransaction {
+        val normalized = name.normalizedName()
+        require(normalized.isNotEmpty()) { "Place name cannot be blank" }
+        placeDao.getByName(normalized)?.id ?: UUID.randomUUID().toString().also { id ->
+            val now = System.currentTimeMillis()
+            placeDao.insert(PlaceEntity(id, normalized, now, now))
+        }
+    }
+
+    suspend fun renamePlace(placeId: String, name: String) = database.withTransaction {
+        val normalized = name.normalizedName()
+        require(normalized.isNotEmpty()) { "Place name cannot be blank" }
+        val current = checkNotNull(placeDao.getById(placeId)) { "Place does not exist: $placeId" }
+        val duplicate = placeDao.getByName(normalized)
+        require(duplicate == null || duplicate.id == placeId) { "Place already exists: $normalized" }
+        check(placeDao.update(current.copy(name = normalized, updatedAt = System.currentTimeMillis())) == 1)
+    }
+
+    suspend fun deletePlace(placeId: String): Boolean = placeDao.deleteById(placeId) == 1
+
+    suspend fun updateMealWithTags(
+        meal: MealEntity,
+        placeName: String,
+        peopleNames: List<String>,
+    ) = database.withTransaction {
+        val now = System.currentTimeMillis()
+        val normalizedPlace = placeName.normalizedName()
+        val place = normalizedPlace.takeIf(String::isNotEmpty)?.let { name ->
+            placeDao.getByName(name) ?: PlaceEntity(UUID.randomUUID().toString(), name, now, now).also {
+                placeDao.insert(it)
+            }
+        }
+        val people = peopleNames
+            .map(String::normalizedName)
+            .filter(String::isNotEmpty)
+            .distinctBy { it.lowercase(Locale.ROOT) }
+            .map { name ->
+                personDao.getByName(name) ?: PersonEntity(UUID.randomUUID().toString(), name, now, now).also {
+                    personDao.insert(it)
+                }
+            }
+        val updated = meal.copy(placeId = place?.id, updatedAt = now)
+        require(
+            updated.coverPhotoId == null || photoDao.getForMeal(updated.id).any { it.id == updated.coverPhotoId },
+        ) { "coverPhotoId must reference a photo belonging to the meal" }
+        check(mealDao.update(updated) == 1) { "Meal does not exist: ${updated.id}" }
+        mealDao.deletePeopleForMeal(updated.id)
+        if (people.isNotEmpty()) {
+            mealDao.insertPeople(people.map { MealPersonCrossRef(updated.id, it.id) })
+        }
+    }
 
     suspend fun createMeal(
         meal: MealEntity,
@@ -122,3 +223,5 @@ private fun String.escapeLikeQuery(): String = trim()
     .replace("\\", "\\\\")
     .replace("%", "\\%")
     .replace("_", "\\_")
+
+private fun String.normalizedName(): String = trim().replace(Regex("\\s+"), " ")

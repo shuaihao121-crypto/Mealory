@@ -73,7 +73,7 @@ com.mealory.app
 
 ### PersonEntity / PlaceEntity
 
-均保存 `id`、`name`、`createdAt`、`updatedAt`。名称应做首尾空白归一化；是否大小写唯一在 Phase 2 结合中文输入体验决定。
+均保存 `id`、`name`、`createdAt`、`updatedAt`。名称在 Repository 归一化首尾与连续空白，并通过 `COLLATE NOCASE` 查询复用已有标签；不依赖通讯录、GPS 或地图服务。
 
 ### MealPersonCrossRef
 
@@ -94,6 +94,8 @@ UI 与查询以 `dateEpochDay + minuteOfDay + timeZoneId` 为真值。`createdAt
 - Meal 详情使用按 ID 的 Room Flow；编辑、封面切换或软删除会使详情与首页 PagingSource 自动失效并刷新。
 - 日历使用 `CalendarMealPreview` 时间范围投影，只读取 Meal ID、当地日期/时间、餐次、饭名与代表照片相对路径；月/年视图不会加载完整关系集合。
 - 日期详情再通过按 `dateEpochDay` 的事务型 Flow 加载当天 `MealWithDetails`，并按当地时间升序显示。
+- 人物/地点列表使用分组投影计算有效 Meal 数、首次和最近日期；软删除记录不参与统计。
+- 人物/地点详情只查询对应的有效 Meal，沿用 Room 关系加载照片、地点和人物；记录页另有最近使用地点查询。
 - 随机一顿优先 30 天以前；避免在超大表上长期使用昂贵的 `ORDER BY RANDOM()`，实现时采用计数 + 偏移或候选窗口。
 
 ## 6. 照片生命周期
