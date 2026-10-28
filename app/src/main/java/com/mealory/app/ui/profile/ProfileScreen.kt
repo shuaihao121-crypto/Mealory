@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Place
+import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.dp
 fun ProfileScreen(
     onPeople: () -> Unit,
     onPlaces: () -> Unit,
+    onRecentlyDeleted: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -43,6 +45,7 @@ fun ProfileScreen(
         )
         ProfileEntry("人物", "看看和谁一起留下了这些饭", Icons.Rounded.Groups, onPeople)
         ProfileEntry("地点", "看看这些饭曾在哪里发生", Icons.Rounded.Place, onPlaces)
+        ProfileEntry("最近删除", "30 天内可以恢复误删的饭", Icons.Rounded.DeleteSweep, onRecentlyDeleted)
     }
 }
 

@@ -10,12 +10,14 @@ import com.mealory.app.data.database.entity.MealEntity
 import com.mealory.app.data.database.entity.MealPersonCrossRef
 import com.mealory.app.data.database.entity.MealPhotoEntity
 import com.mealory.app.data.database.entity.MealWithDetails
+import com.mealory.app.data.database.entity.MemoryMonthMealPreview
 import com.mealory.app.data.database.entity.PersonEntity
 import com.mealory.app.data.database.entity.PersonSummary
 import com.mealory.app.data.database.entity.PlaceEntity
 import com.mealory.app.data.database.entity.PlaceSummary
 import java.util.Locale
 import java.util.UUID
+import kotlin.random.Random
 import kotlinx.coroutines.flow.Flow
 
 class MealRepository(
@@ -29,6 +31,9 @@ class MealRepository(
     fun observeActiveMeals(): Flow<List<MealWithDetails>> = mealDao.observeActiveMeals()
 
     fun observeDeletedMeals(): Flow<List<MealWithDetails>> = mealDao.observeDeletedMeals()
+
+    suspend fun getDeletedBefore(deletedBeforeOrAt: Long): List<MealWithDetails> =
+        mealDao.getDeletedBefore(deletedBeforeOrAt)
 
     fun observeMeal(mealId: String): Flow<MealWithDetails?> = mealDao.observeById(mealId)
 
@@ -49,6 +54,51 @@ class MealRepository(
 
     fun observeMealsForDay(epochDay: Long): Flow<List<MealWithDetails>> =
         mealDao.observeMealsForDay(epochDay)
+
+    fun observeActiveMealCount(): Flow<Long> = mealDao.observeActiveMealCount()
+
+    fun observeFirstActiveMealDate(): Flow<Long?> = mealDao.observeFirstActiveMealDate()
+
+    fun observeMemoryWindow(targetEpochDay: Long): Flow<List<MealWithDetails>> =
+        mealDao.observeMemoryWindow(targetEpochDay)
+
+    fun observePastMonthPreviews(month: Int, currentYear: Int): Flow<List<MemoryMonthMealPreview>> =
+        mealDao.observePastMonthPreviews(month, currentYear)
+
+    fun observeActiveYears(): Flow<List<Int>> = mealDao.observeActiveYears()
+
+    fun observeAnnualMeals(
+        startEpochDay: Long,
+        endEpochDayExclusive: Long,
+    ): Flow<List<MealWithDetails>> = mealDao.observeAnnualMeals(startEpochDay, endEpochDayExclusive)
+
+    fun observeActiveCountBefore(beforeEpochDay: Long): Flow<Long> =
+        mealDao.observeActiveCountBefore(beforeEpochDay)
+
+    suspend fun pickRandomMeal(
+        beforeEpochDay: Long,
+        excludingMealId: String? = null,
+        random: Random = Random.Default,
+    ): MealWithDetails? {
+        val preferredCount = mealDao.countActiveBefore(beforeEpochDay)
+        val totalCount = if (preferredCount > 0) preferredCount else mealDao.countActive()
+        if (totalCount == 0) return null
+
+        val offset = random.nextInt(totalCount)
+        val selected = if (preferredCount > 0) {
+            mealDao.getActiveBeforeAtOffset(beforeEpochDay, offset)
+        } else {
+            mealDao.getActiveAtOffset(offset)
+        }
+        if (totalCount == 1 || selected?.meal?.id != excludingMealId) return selected
+
+        val nextOffset = (offset + 1) % totalCount
+        return if (preferredCount > 0) {
+            mealDao.getActiveBeforeAtOffset(beforeEpochDay, nextOffset)
+        } else {
+            mealDao.getActiveAtOffset(nextOffset)
+        }
+    }
 
     fun observePeople(): Flow<List<PersonEntity>> = personDao.observeAll()
 

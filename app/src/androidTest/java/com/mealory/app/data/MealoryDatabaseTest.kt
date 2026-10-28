@@ -12,27 +12,36 @@ import com.mealory.app.data.database.entity.MealType
 import com.mealory.app.data.database.entity.PersonEntity
 import com.mealory.app.data.database.entity.PlaceEntity
 import com.mealory.app.data.repository.MealRepository
+import com.mealory.app.data.repository.DeletedMealManager
+import com.mealory.app.storage.PhotoStorage
+import java.io.File
+import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.random.Random
 
 @RunWith(AndroidJUnit4::class)
 class MealoryDatabaseTest {
+    private lateinit var context: Context
     private lateinit var database: MealoryDatabase
     private lateinit var repository: MealRepository
+    private lateinit var deletedMealManager: DeletedMealManager
 
     @Before
     fun createDatabase() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
+        context = ApplicationProvider.getApplicationContext()
         database = Room.inMemoryDatabaseBuilder(context, MealoryDatabase::class.java).build()
         repository = MealRepository(database)
+        deletedMealManager = DeletedMealManager(repository, PhotoStorage(context))
     }
 
     @After
@@ -238,6 +247,135 @@ class MealoryDatabaseTest {
         repository.softDelete(secondMeal.id, 9_000L)
         assertEquals(1L, repository.observePersonSummaries().first().first { it.id == personSummaries.first().id }.mealCount)
         assertEquals(1L, repository.observePlaceSummaries().first().single().mealCount)
+    }
+
+    @Test
+    fun memoriesPreferExactDateAndRandomMealPrefersOlderHistory() = runTest {
+        val target = LocalDate.of(2025, 10, 27).toEpochDay()
+        val exact = meal(
+            id = "memory-exact",
+            placeId = null,
+            coverPhotoId = null,
+            dateEpochDay = target,
+        )
+        val nearby = meal(
+            id = "memory-nearby",
+            placeId = null,
+            coverPhotoId = null,
+            dateEpochDay = target - 2,
+        )
+        val recent = meal(
+            id = "memory-recent",
+            placeId = null,
+            coverPhotoId = null,
+            dateEpochDay = LocalDate.of(2026, 10, 20).toEpochDay(),
+        )
+        repository.createMeal(nearby)
+        repository.createMeal(exact)
+        repository.createMeal(recent)
+
+        val window = repository.observeMemoryWindow(target).first()
+        assertEquals("memory-exact", window.first().meal.id)
+        assertEquals(3L, repository.observeActiveMealCount().first())
+        assertEquals(target - 2, repository.observeFirstActiveMealDate().first())
+
+        val cutoff = LocalDate.of(2026, 9, 27).toEpochDay()
+        val firstRandom = repository.pickRandomMeal(cutoff, random = Random(7))!!
+        assertTrue(firstRandom.meal.id in setOf("memory-exact", "memory-nearby"))
+        val secondRandom = repository.pickRandomMeal(
+            cutoff,
+            excludingMealId = firstRandom.meal.id,
+            random = Random(7),
+        )!!
+        assertNotEquals(firstRandom.meal.id, secondRandom.meal.id)
+
+        val monthGroups = repository.observePastMonthPreviews(month = 10, currentYear = 2026).first()
+        assertEquals(setOf("memory-exact", "memory-nearby"), monthGroups.map { it.mealId }.toSet())
+        assertEquals(setOf(2025), monthGroups.map { it.year }.toSet())
+
+        repository.softDelete(exact.id, 10_000L)
+        assertEquals("memory-nearby", repository.observeMemoryWindow(target).first().single().meal.id)
+    }
+
+    @Test
+    fun annualQueriesReturnOnlyActiveMealsAndCorrectYearBoundaries() = runTest {
+        val last2024 = meal(
+            id = "annual-2024",
+            placeId = null,
+            coverPhotoId = null,
+            dateEpochDay = LocalDate.of(2024, 12, 31).toEpochDay(),
+        )
+        val first2025 = meal(
+            id = "annual-2025-first",
+            placeId = null,
+            coverPhotoId = null,
+            dateEpochDay = LocalDate.of(2025, 1, 1).toEpochDay(),
+        )
+        val last2025 = meal(
+            id = "annual-2025-last",
+            placeId = null,
+            coverPhotoId = null,
+            dateEpochDay = LocalDate.of(2025, 12, 31).toEpochDay(),
+        )
+        val deleted2026 = meal(
+            id = "annual-deleted",
+            placeId = null,
+            coverPhotoId = null,
+            dateEpochDay = LocalDate.of(2026, 1, 1).toEpochDay(),
+        )
+        repository.createMeal(last2024)
+        repository.createMeal(last2025)
+        repository.createMeal(first2025)
+        repository.createMeal(deleted2026)
+        repository.softDelete(deleted2026.id, 10_000L)
+
+        val start = LocalDate.of(2025, 1, 1).toEpochDay()
+        val end = LocalDate.of(2026, 1, 1).toEpochDay()
+        val annualMeals = repository.observeAnnualMeals(start, end).first()
+
+        assertEquals(listOf("annual-2025-first", "annual-2025-last"), annualMeals.map { it.meal.id })
+        assertEquals(1L, repository.observeActiveCountBefore(start).first())
+        assertEquals(listOf(2025, 2024), repository.observeActiveYears().first())
+    }
+
+    @Test
+    fun recentlyDeletedRestoresOrPermanentlyDeletesDatabaseAndPhotoFiles() = runTest {
+        val now = System.currentTimeMillis()
+        val photoMeal = meal(
+            id = "deleted-with-photo",
+            placeId = null,
+            coverPhotoId = "deleted-photo",
+        )
+        val relativePath = "pictures/meals/2026/10/${photoMeal.id}/deleted-photo.jpg"
+        val photoFile = File(context.filesDir, relativePath).apply {
+            parentFile!!.mkdirs()
+            writeBytes(byteArrayOf(1, 2, 3))
+        }
+        repository.createMeal(
+            photoMeal,
+            photos = listOf(photo(photoMeal.id, "deleted-photo").copy(relativePath = relativePath)),
+        )
+        repository.softDelete(photoMeal.id, now)
+
+        deletedMealManager.restore(photoMeal.id, now + 1)
+        assertNull(repository.getMeal(photoMeal.id)!!.meal.deletedAt)
+        repository.softDelete(photoMeal.id, now + 2)
+        assertTrue(deletedMealManager.permanentlyDelete(photoMeal.id))
+        assertNull(repository.getMeal(photoMeal.id))
+        assertFalse(photoFile.exists())
+
+        val expired = meal(id = "expired-deleted", placeId = null, coverPhotoId = null)
+        val recent = meal(id = "recent-deleted", placeId = null, coverPhotoId = null)
+        repository.createMeal(expired)
+        repository.createMeal(recent)
+        repository.softDelete(expired.id, now - DeletedMealManager.RETENTION_MILLIS - 1)
+        repository.softDelete(recent.id, now - DeletedMealManager.RETENTION_MILLIS + 1)
+
+        val cleanup = deletedMealManager.cleanupExpired(now)
+        assertEquals(1, cleanup.deletedCount)
+        assertEquals(0, cleanup.failedCount)
+        assertNull(repository.getMeal(expired.id))
+        assertTrue(repository.getMeal(recent.id) != null)
     }
 
     private fun meal(

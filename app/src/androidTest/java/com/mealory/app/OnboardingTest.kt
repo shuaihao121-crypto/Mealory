@@ -111,9 +111,37 @@ class OnboardingTest {
         composeRule.onNodeWithText("1月").assertIsDisplayed().performClick()
         composeRule.onNodeWithText("月视图").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("回忆", useUnmergedTree = true).performClick()
-        composeRule.onNodeWithText("Mealory 会在合适的时候，把过去轻轻带回来。").assertIsDisplayed()
+        composeRule.onNodeWithText("过去的今天").assertIsDisplayed()
+        composeRule.onNodeWithText("随机一顿").assertIsDisplayed()
+        composeRule.onNodeWithText("过去的这个月").assertIsDisplayed()
+        composeRule.onNodeWithText("年度回忆").assertIsDisplayed()
+        composeRule.onNodeWithText("我的 ${today.year}").assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("${today.year} 年，你留下了").assertIsDisplayed()
+        composeRule.onNodeWithText("这一年的第一顿，也是最后一顿").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("返回").performClick()
+        val deletedMeal = calendarMeal.copy(
+            id = "recently-deleted-ui-meal",
+            title = "可恢复的晚餐",
+            createdAt = System.currentTimeMillis() + 1,
+            updatedAt = System.currentTimeMillis() + 1,
+        )
+        runBlocking {
+            application.container.mealRepository.observeDeletedMeals().first().forEach {
+                application.container.mealRepository.restore(it.meal.id, System.currentTimeMillis())
+            }
+            application.container.mealRepository.createMeal(deletedMeal)
+            application.container.mealRepository.softDelete(deletedMeal.id, System.currentTimeMillis())
+        }
         composeRule.onNodeWithContentDescription("我的", useUnmergedTree = true).performClick()
         composeRule.onNodeWithText("人物和地点只是你自己的本地标签。").assertIsDisplayed()
+        composeRule.onNodeWithText("最近删除").assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("可恢复的晚餐").assertIsDisplayed()
+        composeRule.onNodeWithText("还可恢复 30 天").assertIsDisplayed()
+        composeRule.onNodeWithText("恢复").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithText("可恢复的晚餐").fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onNodeWithContentDescription("返回").performClick()
         composeRule.onNodeWithText("人物").assertIsDisplayed().performClick()
         composeRule.onNodeWithText("小王").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("返回").performClick()

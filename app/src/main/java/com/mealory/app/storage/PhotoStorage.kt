@@ -27,6 +27,16 @@ data class PreparedPhoto(
     val originalTakenAt: Long?,
 )
 
+data class StagedPhotoDeletion(
+    val originalFile: File,
+    val stagedFile: File,
+)
+
+data class PhotoDeletionBatch(
+    val stagingDirectory: File,
+    val files: List<StagedPhotoDeletion>,
+)
+
 class PhotoStorage(
     private val context: Context,
 ) {
@@ -88,5 +98,59 @@ class PhotoStorage(
 
     fun deleteCameraCapture(capture: CameraCapture?) {
         capture?.file?.delete()
+    }
+
+    fun stageForDeletion(mealId: String, relativePaths: List<String>): PhotoDeletionBatch {
+        val stagingDirectory = File(filesRoot, "pictures/.deleting/$mealId")
+        val moved = mutableListOf<StagedPhotoDeletion>()
+        try {
+            relativePaths.distinct().forEachIndexed { index, relativePath ->
+                val original = resolvePrivateFile(relativePath)
+                if (!original.exists()) return@forEachIndexed
+                val staged = File(stagingDirectory, "$index-${original.name}")
+                staged.parentFile?.mkdirs()
+                moveFile(original, staged)
+                moved += StagedPhotoDeletion(original, staged)
+            }
+        } catch (error: Throwable) {
+            rollbackDeletion(PhotoDeletionBatch(stagingDirectory, moved))
+            throw error
+        }
+        return PhotoDeletionBatch(stagingDirectory, moved)
+    }
+
+    fun rollbackDeletion(batch: PhotoDeletionBatch) {
+        batch.files.asReversed().forEach { file ->
+            if (file.stagedFile.exists()) {
+                file.originalFile.parentFile?.mkdirs()
+                moveFile(file.stagedFile, file.originalFile)
+            }
+        }
+        batch.stagingDirectory.deleteRecursively()
+    }
+
+    fun finishDeletion(batch: PhotoDeletionBatch) {
+        batch.stagingDirectory.deleteRecursively()
+        batch.files.mapNotNull { it.originalFile.parentFile }.distinct().forEach(File::delete)
+    }
+
+    private fun resolvePrivateFile(relativePath: String): File {
+        val root = filesRoot.canonicalFile
+        val file = File(filesRoot, relativePath).canonicalFile
+        require(file.toPath().startsWith(root.toPath())) { "Photo path must remain inside app storage" }
+        return file
+    }
+
+    private fun moveFile(source: File, target: File) {
+        try {
+            Files.move(
+                source.toPath(),
+                target.toPath(),
+                StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING,
+            )
+        } catch (_: AtomicMoveNotSupportedException) {
+            Files.move(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
     }
 }

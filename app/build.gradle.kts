@@ -72,6 +72,7 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     implementation("androidx.room:room-paging:$roomVersion")
     implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.work:work-runtime-ktx:2.12.0")
     // Coil 3.4+ is compiled against Kotlin newer than AGP 9.4's built-in Kotlin 2.2.10.
     //noinspection NewerVersionAvailable
     implementation("io.coil-kt.coil3:coil-compose:3.3.0")

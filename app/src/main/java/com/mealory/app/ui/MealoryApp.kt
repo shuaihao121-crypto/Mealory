@@ -61,9 +61,11 @@ import com.mealory.app.ui.calendar.CalendarScreen
 import com.mealory.app.ui.calendar.DateDetailScreen
 import com.mealory.app.ui.components.MealoryLogo
 import com.mealory.app.ui.home.HomeScreen
+import com.mealory.app.ui.memories.MemoriesScreen
+import com.mealory.app.ui.memories.AnnualMemoryScreen
 import com.mealory.app.ui.mealdetail.MealDetailScreen
-import com.mealory.app.ui.placeholder.PlaceholderScreen
 import com.mealory.app.ui.profile.ProfileScreen
+import com.mealory.app.ui.deleted.RecentlyDeletedScreen
 import com.mealory.app.ui.tags.PeopleScreen
 import com.mealory.app.ui.tags.PersonDetailScreen
 import com.mealory.app.ui.tags.PlaceDetailScreen
@@ -335,17 +337,29 @@ private fun MainShell(
                 )
             }
             composable("memories") {
-                PlaceholderScreen(
-                    title = "回忆",
-                    message = "Mealory 会在合适的时候，把过去轻轻带回来。",
-                    icon = Icons.Rounded.AutoAwesome,
+                MemoriesScreen(
+                    onMealClick = onMealClick,
+                    onAnnualClick = { navController.navigate("annual/$it") },
+                )
+            }
+            composable(
+                route = "annual/{year}",
+                arguments = listOf(navArgument("year") { type = NavType.IntType }),
+            ) {
+                AnnualMemoryScreen(
+                    onBack = { navController.popBackStack() },
+                    onMealClick = onMealClick,
                 )
             }
             composable("profile") {
                 ProfileScreen(
                     onPeople = { navController.navigate("people") },
                     onPlaces = { navController.navigate("places") },
+                    onRecentlyDeleted = { navController.navigate("recently-deleted") },
                 )
+            }
+            composable("recently-deleted") {
+                RecentlyDeletedScreen(onBack = { navController.popBackStack() })
             }
             composable("people") {
                 PeopleScreen(

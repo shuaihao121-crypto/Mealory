@@ -11,6 +11,7 @@ import com.mealory.app.data.database.entity.CalendarMealPreview
 import com.mealory.app.data.database.entity.MealEntity
 import com.mealory.app.data.database.entity.MealPersonCrossRef
 import com.mealory.app.data.database.entity.MealWithDetails
+import com.mealory.app.data.database.entity.MemoryMonthMealPreview
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -96,6 +97,123 @@ interface MealDao {
     )
     fun observeMealsForDay(epochDay: Long): Flow<List<MealWithDetails>>
 
+    @Query("SELECT COUNT(*) FROM meals WHERE deletedAt IS NULL")
+    fun observeActiveMealCount(): Flow<Long>
+
+    @Query("SELECT MIN(dateEpochDay) FROM meals WHERE deletedAt IS NULL")
+    fun observeFirstActiveMealDate(): Flow<Long?>
+
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM meals
+        WHERE deletedAt IS NULL
+          AND dateEpochDay BETWEEN :targetEpochDay - 3 AND :targetEpochDay + 3
+        ORDER BY ABS(dateEpochDay - :targetEpochDay) ASC,
+                 dateEpochDay DESC,
+                 minuteOfDay DESC,
+                 createdAt DESC
+        """,
+    )
+    fun observeMemoryWindow(targetEpochDay: Long): Flow<List<MealWithDetails>>
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM meals
+        WHERE deletedAt IS NULL AND dateEpochDay < :beforeEpochDay
+        """,
+    )
+    suspend fun countActiveBefore(beforeEpochDay: Long): Int
+
+    @Query("SELECT COUNT(*) FROM meals WHERE deletedAt IS NULL")
+    suspend fun countActive(): Int
+
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM meals
+        WHERE deletedAt IS NULL AND dateEpochDay < :beforeEpochDay
+        ORDER BY dateEpochDay ASC, minuteOfDay ASC, createdAt ASC
+        LIMIT 1 OFFSET :offset
+        """,
+    )
+    suspend fun getActiveBeforeAtOffset(beforeEpochDay: Long, offset: Int): MealWithDetails?
+
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM meals
+        WHERE deletedAt IS NULL
+        ORDER BY dateEpochDay ASC, minuteOfDay ASC, createdAt ASC
+        LIMIT 1 OFFSET :offset
+        """,
+    )
+    suspend fun getActiveAtOffset(offset: Int): MealWithDetails?
+
+    @Query(
+        """
+        SELECT
+            CAST(strftime('%Y', meals.dateEpochDay * 86400, 'unixepoch') AS INTEGER) AS year,
+            meals.id AS mealId,
+            meals.dateEpochDay AS dateEpochDay,
+            COALESCE(
+                (
+                    SELECT cover_photo.relativePath
+                    FROM meal_photos AS cover_photo
+                    WHERE cover_photo.id = meals.coverPhotoId
+                      AND cover_photo.mealId = meals.id
+                    LIMIT 1
+                ),
+                (
+                    SELECT meal_photos.relativePath
+                    FROM meal_photos
+                    WHERE meal_photos.mealId = meals.id
+                    ORDER BY meal_photos.sortOrder ASC, meal_photos.createdAt ASC
+                    LIMIT 1
+                )
+            ) AS coverRelativePath
+        FROM meals
+        WHERE meals.deletedAt IS NULL
+          AND CAST(strftime('%m', meals.dateEpochDay * 86400, 'unixepoch') AS INTEGER) = :month
+          AND CAST(strftime('%Y', meals.dateEpochDay * 86400, 'unixepoch') AS INTEGER) < :currentYear
+        ORDER BY year DESC, meals.dateEpochDay DESC, meals.minuteOfDay DESC
+        """,
+    )
+    fun observePastMonthPreviews(month: Int, currentYear: Int): Flow<List<MemoryMonthMealPreview>>
+
+    @Query(
+        """
+        SELECT DISTINCT CAST(strftime('%Y', dateEpochDay * 86400, 'unixepoch') AS INTEGER)
+        FROM meals
+        WHERE deletedAt IS NULL
+        ORDER BY 1 DESC
+        """,
+    )
+    fun observeActiveYears(): Flow<List<Int>>
+
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM meals
+        WHERE deletedAt IS NULL
+          AND dateEpochDay >= :startEpochDay
+          AND dateEpochDay < :endEpochDayExclusive
+        ORDER BY dateEpochDay ASC, minuteOfDay ASC, createdAt ASC
+        """,
+    )
+    fun observeAnnualMeals(
+        startEpochDay: Long,
+        endEpochDayExclusive: Long,
+    ): Flow<List<MealWithDetails>>
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM meals
+        WHERE deletedAt IS NULL AND dateEpochDay < :beforeEpochDay
+        """,
+    )
+    fun observeActiveCountBefore(beforeEpochDay: Long): Flow<Long>
+
     @Transaction
     @Query(
         """
@@ -115,6 +233,16 @@ interface MealDao {
         """,
     )
     fun observeDeletedMeals(): Flow<List<MealWithDetails>>
+
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM meals
+        WHERE deletedAt IS NOT NULL AND deletedAt <= :deletedBeforeOrAt
+        ORDER BY deletedAt ASC
+        """,
+    )
+    suspend fun getDeletedBefore(deletedBeforeOrAt: Long): List<MealWithDetails>
 
     @Query(
         """
