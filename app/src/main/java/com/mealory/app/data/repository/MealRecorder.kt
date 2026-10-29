@@ -44,6 +44,10 @@ class MealRecorder(
         require(draft.minuteOfDay in 0..1_439)
         require(draft.photos.size <= MealRepository.MAX_PHOTOS_PER_MEAL)
         require(draft.photos.isEmpty() || draft.coverPhotoIndex in draft.photos.indices)
+        require(draft.title.length <= MealInputLimits.TITLE) { "饭名过长" }
+        require(draft.note.length <= MealInputLimits.NOTE) { "备注过长" }
+        require(draft.placeName.length <= MealInputLimits.TAG_NAME) { "地点名称过长" }
+        require(draft.peopleNames.all { it.length <= MealInputLimits.TAG_NAME }) { "人物名称过长" }
 
         val mealId = UUID.randomUUID().toString()
         val prepared = mutableListOf<PreparedPhoto>()

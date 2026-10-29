@@ -33,7 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
+import com.mealory.app.ui.components.MealPhotoImage
 import com.mealory.app.data.database.entity.MealType
 import com.mealory.app.data.database.entity.MealWithDetails
 import java.io.File
@@ -146,7 +146,7 @@ private fun RelatedMealCard(meal: MealWithDetails, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(meal.photos.sortedBy { it.sortOrder }, key = { it.id }) { photo ->
-                    AsyncImage(
+                    MealPhotoImage(
                         model = File(context.filesDir, photo.relativePath),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,

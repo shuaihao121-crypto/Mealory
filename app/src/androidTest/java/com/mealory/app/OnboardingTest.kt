@@ -2,12 +2,17 @@ package com.mealory.app
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import com.mealory.app.data.database.entity.MealEntity
 import com.mealory.app.data.database.entity.MealType
+import com.mealory.app.data.preferences.PhotoQuality
+import com.mealory.app.data.preferences.ThemeMode
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.runBlocking
@@ -140,6 +145,24 @@ class OnboardingTest {
         composeRule.onNodeWithText("恢复").performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
             composeRule.onAllNodesWithText("可恢复的晚餐").fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onNodeWithContentDescription("返回").performClick()
+        composeRule.onNodeWithText("数据与备份").assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("卸载 Mealory 或清除应用数据前，请先导出完整备份。").assertIsDisplayed()
+        composeRule.onNode(hasText("导出完整备份", substring = true) and hasClickAction())
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNode(hasText("从备份恢复", substring = true) and hasClickAction())
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("返回").performClick()
+        composeRule.onNodeWithText("照片、外观与关于").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("外观").assertIsDisplayed()
+        composeRule.onNodeWithText("深色").performScrollTo().performClick()
+        composeRule.onNodeWithText("高质量").performScrollTo().performClick()
+        composeRule.onNodeWithText("照片与存储").performScrollTo().assertIsDisplayed()
+        runBlocking {
+            application.container.settingsRepository.settings.first {
+                it.themeMode == ThemeMode.DARK && it.photoQuality == PhotoQuality.HIGH
+            }
         }
         composeRule.onNodeWithContentDescription("返回").performClick()
         composeRule.onNodeWithText("人物").assertIsDisplayed().performClick()

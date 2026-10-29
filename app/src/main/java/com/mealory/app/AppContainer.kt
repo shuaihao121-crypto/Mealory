@@ -9,6 +9,7 @@ import com.mealory.app.data.repository.MealRepository
 import com.mealory.app.storage.ExifReader
 import com.mealory.app.storage.PhotoProcessor
 import com.mealory.app.storage.PhotoStorage
+import com.mealory.app.backup.BackupManager
 
 class AppContainer(context: Context) {
     val database: MealoryDatabase = MealoryDatabase.build(context)
@@ -19,4 +20,5 @@ class AppContainer(context: Context) {
     val exifReader = ExifReader(context.contentResolver)
     val photoProcessor = PhotoProcessor(context.contentResolver, photoStorage, exifReader)
     val mealRecorder = MealRecorder(mealRepository, photoProcessor, photoStorage)
+    val backupManager = BackupManager(context.applicationContext, database, settingsRepository)
 }

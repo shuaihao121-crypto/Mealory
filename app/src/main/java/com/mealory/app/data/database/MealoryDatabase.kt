@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.mealory.app.data.database.dao.MealDao
+import com.mealory.app.data.database.dao.BackupDao
 import com.mealory.app.data.database.dao.MealPhotoDao
 import com.mealory.app.data.database.dao.PersonDao
 import com.mealory.app.data.database.dao.PlaceDao
@@ -32,6 +33,7 @@ abstract class MealoryDatabase : RoomDatabase() {
     abstract fun mealPhotoDao(): MealPhotoDao
     abstract fun personDao(): PersonDao
     abstract fun placeDao(): PlaceDao
+    abstract fun backupDao(): BackupDao
 
     companion object {
         const val DATABASE_NAME = "mealory.db"

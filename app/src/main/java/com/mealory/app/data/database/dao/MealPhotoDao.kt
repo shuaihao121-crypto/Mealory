@@ -7,9 +7,14 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.mealory.app.data.database.entity.MealPhotoEntity
+import com.mealory.app.data.database.entity.PhotoStorageStats
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MealPhotoDao {
+    @Query("SELECT COUNT(*) AS photoCount, COALESCE(SUM(fileSize), 0) AS totalBytes FROM meal_photos")
+    fun observeStorageStats(): Flow<PhotoStorageStats>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAll(photos: List<MealPhotoEntity>)
 

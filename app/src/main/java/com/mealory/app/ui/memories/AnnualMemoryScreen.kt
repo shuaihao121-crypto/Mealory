@@ -35,7 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
+import com.mealory.app.ui.components.MealPhotoImage
 import com.mealory.app.data.database.entity.MealWithDetails
 import java.io.File
 import java.time.LocalDate
@@ -234,7 +234,7 @@ private fun SeasonPhotoGroup(
         photos.chunked(2).forEach { rowPhotos ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 rowPhotos.forEach { photo ->
-                    AsyncImage(
+                    MealPhotoImage(
                         model = File(context.filesDir, photo.relativePath),
                         contentDescription = "${season.label}的饮食照片",
                         contentScale = ContentScale.Crop,
@@ -265,7 +265,7 @@ private fun AnnualMealCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         if (cover != null) {
-            AsyncImage(
+            MealPhotoImage(
                 model = File(context.filesDir, cover.relativePath),
                 contentDescription = meal.meal.title ?: label,
                 contentScale = ContentScale.Crop,

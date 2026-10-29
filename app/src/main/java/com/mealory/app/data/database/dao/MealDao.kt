@@ -103,6 +103,9 @@ interface MealDao {
     @Query("SELECT MIN(dateEpochDay) FROM meals WHERE deletedAt IS NULL")
     fun observeFirstActiveMealDate(): Flow<Long?>
 
+    @Query("SELECT COUNT(DISTINCT dateEpochDay) FROM meals WHERE deletedAt IS NULL")
+    fun observeActiveRecordedDayCount(): Flow<Long>
+
     @Transaction
     @Query(
         """

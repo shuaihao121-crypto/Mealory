@@ -66,6 +66,8 @@ import com.mealory.app.ui.memories.AnnualMemoryScreen
 import com.mealory.app.ui.mealdetail.MealDetailScreen
 import com.mealory.app.ui.profile.ProfileScreen
 import com.mealory.app.ui.deleted.RecentlyDeletedScreen
+import com.mealory.app.ui.backup.BackupScreen
+import com.mealory.app.ui.settings.SettingsScreen
 import com.mealory.app.ui.tags.PeopleScreen
 import com.mealory.app.ui.tags.PersonDetailScreen
 import com.mealory.app.ui.tags.PlaceDetailScreen
@@ -356,10 +358,18 @@ private fun MainShell(
                     onPeople = { navController.navigate("people") },
                     onPlaces = { navController.navigate("places") },
                     onRecentlyDeleted = { navController.navigate("recently-deleted") },
+                    onBackup = { navController.navigate("backup") },
+                    onSettings = { navController.navigate("settings") },
                 )
             }
             composable("recently-deleted") {
                 RecentlyDeletedScreen(onBack = { navController.popBackStack() })
+            }
+            composable("backup") {
+                BackupScreen(onBack = { navController.popBackStack() })
+            }
+            composable("settings") {
+                SettingsScreen(onBack = { navController.popBackStack() })
             }
             composable("people") {
                 PeopleScreen(

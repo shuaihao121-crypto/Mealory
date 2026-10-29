@@ -10,9 +10,11 @@ import com.mealory.app.data.database.entity.MealType
 import com.mealory.app.data.database.entity.PersonEntity
 import com.mealory.app.data.database.entity.PlaceEntity
 import com.mealory.app.data.repository.MealPhotoSource
+import com.mealory.app.data.repository.MealInputLimits
 import com.mealory.app.data.repository.MealRecordDraft
 import com.mealory.app.storage.CameraCapture
 import com.mealory.app.util.MealTypeClassifier
+import com.mealory.app.util.toUserFacingMessage
 import java.io.File
 import java.time.Instant
 import java.time.LocalDate
@@ -158,9 +160,9 @@ class AddMealViewModel(
         it.copy(minuteOfDay = minuteOfDay, mealType = MealTypeClassifier.classify(minuteOfDay))
     }
     fun setMealType(value: MealType) = _state.update { it.copy(mealType = value) }
-    fun setTitle(value: String) = _state.update { it.copy(title = value) }
-    fun setPlace(value: String) = _state.update { it.copy(place = value) }
-    fun setPeople(value: String) = _state.update { it.copy(people = value) }
+    fun setTitle(value: String) = _state.update { it.copy(title = value.take(MealInputLimits.TITLE)) }
+    fun setPlace(value: String) = _state.update { it.copy(place = value.take(MealInputLimits.TAG_NAME)) }
+    fun setPeople(value: String) = _state.update { it.copy(people = value.take(MealInputLimits.PEOPLE_FIELD)) }
     fun togglePerson(name: String) = _state.update { current ->
         val names = current.people.split('，', ',')
             .map(String::trim)
@@ -168,9 +170,9 @@ class AddMealViewModel(
             .toMutableList()
         val existingIndex = names.indexOfFirst { it.equals(name, ignoreCase = true) }
         if (existingIndex >= 0) names.removeAt(existingIndex) else names += name
-        current.copy(people = names.joinToString("，"))
+        current.copy(people = names.joinToString("，").take(MealInputLimits.PEOPLE_FIELD))
     }
-    fun setNote(value: String) = _state.update { it.copy(note = value) }
+    fun setNote(value: String) = _state.update { it.copy(note = value.take(MealInputLimits.NOTE)) }
 
     fun save() {
         if (_state.value.isSaving) return
@@ -201,7 +203,7 @@ class AddMealViewModel(
                 _state.update {
                     it.copy(
                         isSaving = false,
-                        errorMessage = error.message ?: "没有保存成功，请再试一次。",
+                        errorMessage = error.toUserFacingMessage("没有保存成功，请再试一次"),
                     )
                 }
             }

@@ -54,7 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
+import com.mealory.app.ui.components.MealPhotoImage
 import com.mealory.app.data.database.entity.MealType
 import java.time.LocalDate
 
@@ -264,7 +264,7 @@ private fun PhotoEditor(
                 itemsIndexed(photos, key = { _, photo -> photo.uri.toString() }) { index, photo ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box {
-                            AsyncImage(
+                            MealPhotoImage(
                                 model = photo.uri,
                                 contentDescription = "照片 ${index + 1}",
                                 contentScale = ContentScale.Crop,

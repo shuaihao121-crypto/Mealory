@@ -41,8 +41,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
+import com.mealory.app.ui.components.MealPhotoImage
 import com.mealory.app.data.database.entity.MealType
+import com.mealory.app.data.repository.MealInputLimits
 import com.mealory.app.data.database.entity.PersonEntity
 import com.mealory.app.data.database.entity.PlaceEntity
 import java.io.File
@@ -150,7 +151,7 @@ private fun DetailContent(
             HorizontalPager(state = pagerState) { page ->
                 val photo = details.photos[page]
                 Column {
-                    AsyncImage(
+                    MealPhotoImage(
                         model = File(context.filesDir, photo.relativePath),
                         contentDescription = "照片 ${page + 1}",
                         contentScale = ContentScale.Crop,
@@ -182,8 +183,8 @@ private fun DetailContent(
                 Spacer(Modifier.width(8.dp))
                 OutlinedTextField(timeText, { timeText = it }, label = { Text("时间") }, modifier = Modifier.weight(1f))
             }
-            OutlinedTextField(title, { title = it }, label = { Text("吃了什么") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(placeName, { placeName = it }, label = { Text("地点") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(title, { title = it.take(MealInputLimits.TITLE) }, label = { Text("吃了什么") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(placeName, { placeName = it.take(MealInputLimits.TAG_NAME) }, label = { Text("地点") }, modifier = Modifier.fillMaxWidth())
             if (availablePlaces.isNotEmpty()) {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(availablePlaces) { place ->
@@ -197,7 +198,7 @@ private fun DetailContent(
             }
             OutlinedTextField(
                 peopleNames,
-                { peopleNames = it },
+                { peopleNames = it.take(MealInputLimits.PEOPLE_FIELD) },
                 label = { Text("和谁一起") },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -222,7 +223,7 @@ private fun DetailContent(
                     }
                 }
             }
-            OutlinedTextField(note, { note = it }, label = { Text("备注") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
+            OutlinedTextField(note, { note = it.take(MealInputLimits.NOTE) }, label = { Text("备注") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
             TextButton(
                 onClick = {
                     val date = runCatching { LocalDate.parse(dateText) }.getOrDefault(LocalDate.ofEpochDay(meal.dateEpochDay))

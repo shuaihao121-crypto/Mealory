@@ -48,6 +48,17 @@ class SettingsRepository(
         dataStore.edit { it[Keys.DefaultMealTimeRanges] = ranges.toJson() }
     }
 
+    suspend fun replaceAll(settings: MealorySettings) {
+        dataStore.edit { preferences ->
+            preferences[Keys.OnboardingCompleted] = settings.onboardingCompleted
+            preferences[Keys.ThemeMode] = settings.themeMode.name
+            preferences[Keys.PhotoQuality] = settings.photoQuality.name
+            settings.lastBackupAt?.let { preferences[Keys.LastBackupAt] = it }
+                ?: preferences.remove(Keys.LastBackupAt)
+            preferences[Keys.DefaultMealTimeRanges] = settings.defaultMealTimeRanges.toJson()
+        }
+    }
+
     private fun mapSettings(preferences: Preferences): MealorySettings = MealorySettings(
         onboardingCompleted = preferences[Keys.OnboardingCompleted] ?: false,
         themeMode = preferences[Keys.ThemeMode].toEnumOrDefault(ThemeMode.SYSTEM),

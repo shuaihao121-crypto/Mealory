@@ -46,9 +46,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil3.compose.AsyncImage
+import com.mealory.app.ui.components.MealPhotoImage
 import com.mealory.app.data.database.entity.MealType
 import com.mealory.app.data.database.entity.MealWithDetails
+import com.mealory.app.data.repository.MealInputLimits
 import com.mealory.app.ui.components.MealoryLogo
 import java.io.File
 import java.time.LocalDate
@@ -83,7 +84,7 @@ fun HomeScreen(
         )
         OutlinedTextField(
             value = query,
-            onValueChange = { viewModel.searchQuery.value = it },
+            onValueChange = { viewModel.searchQuery.value = it.take(MealInputLimits.SEARCH) },
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
             placeholder = { Text("搜索饭名、备注、地点或人物") },
             singleLine = true,
@@ -211,7 +212,7 @@ private fun MealCard(item: MealWithDetails, onClick: () -> Unit) {
         shape = RoundedCornerShape(22.dp),
     ) {
         if (cover != null) {
-            AsyncImage(
+            MealPhotoImage(
                 model = File(context.filesDir, cover.relativePath),
                 contentDescription = item.meal.title ?: "这一顿的照片",
                 contentScale = ContentScale.Crop,

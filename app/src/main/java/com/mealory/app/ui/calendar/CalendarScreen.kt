@@ -53,7 +53,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
+import com.mealory.app.ui.components.MealPhotoImage
 import com.mealory.app.data.database.entity.CalendarMealPreview
 import com.mealory.app.data.database.entity.MealType
 import java.io.File
@@ -230,7 +230,7 @@ private fun DayCell(
             .clickable(enabled = meals.isNotEmpty(), onClick = onClick),
     ) {
         meals.firstOrNull { it.coverRelativePath != null }?.coverRelativePath?.let { path ->
-            AsyncImage(
+            MealPhotoImage(
                 model = File(context.filesDir, path),
                 contentDescription = "${date.monthValue}月${date.dayOfMonth}日代表照片",
                 contentScale = ContentScale.Crop,
@@ -312,7 +312,7 @@ private fun MonthCard(
                 .aspectRatio(1.55f),
         ) {
             meals.firstOrNull { it.coverRelativePath != null }?.coverRelativePath?.let { path ->
-                AsyncImage(
+                MealPhotoImage(
                     model = File(context.filesDir, path),
                     contentDescription = "$year 年 $month 月代表照片",
                     contentScale = ContentScale.Crop,
@@ -372,7 +372,7 @@ private fun DayPreviewSheet(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         if (meal.coverRelativePath != null) {
-                            AsyncImage(
+                            MealPhotoImage(
                                 model = File(context.filesDir, meal.coverRelativePath),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,

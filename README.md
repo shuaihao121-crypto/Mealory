@@ -23,7 +23,7 @@ Mealory 是一款只属于用户自己的 Android 饮食回忆日记。
 - Android Gradle Plugin 9.4.1 / Gradle 9.6.0
 - 单 `app` module
 
-后续阶段按 [ARCHITECTURE.md](ARCHITECTURE.md) 继续引入照片存储、Coil、Paging 3、WorkManager、Photo Picker、FileProvider 与 Storage Access Framework。
+V1/MVP 功能已经实现：记录、时间线、搜索、日历、人物/地点、回忆、年度回忆、最近删除、开放 ZIP 备份恢复以及本地设置均可使用。项目已接入 Coil、Paging 3、WorkManager、Photo Picker、FileProvider 与 Storage Access Framework。
 
 ## 本地构建
 
@@ -49,5 +49,5 @@ Debug APK 生成在 `app/build/outputs/apk/debug/app-debug.apk`。
 
 ## 隐私提醒
 
-卸载 Mealory 或清除应用数据会删除本地记录。正式数据功能完成后，用户应在卸载或清除数据前从“数据与备份”导出完整备份。
+卸载 Mealory 或清除应用数据会删除本地记录。执行这些操作前，请从“我的 → 数据与备份”导出完整 ZIP 备份。
 

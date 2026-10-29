@@ -10,6 +10,7 @@ import com.mealory.app.data.database.entity.PersonEntity
 import com.mealory.app.data.database.entity.PersonSummary
 import com.mealory.app.data.database.entity.PlaceEntity
 import com.mealory.app.data.database.entity.PlaceSummary
+import com.mealory.app.util.toUserFacingMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +30,7 @@ class PeopleViewModel(application: Application) : AndroidViewModel(application) 
     private fun launchOperation(block: suspend () -> Unit) {
         viewModelScope.launch {
             errorMessage.value = null
-            runCatching { block() }.onFailure { errorMessage.value = it.message }
+            runCatching { block() }.onFailure { errorMessage.value = it.toUserFacingMessage("操作没有完成") }
         }
     }
 }
@@ -47,7 +48,7 @@ class PlacesViewModel(application: Application) : AndroidViewModel(application) 
     private fun launchOperation(block: suspend () -> Unit) {
         viewModelScope.launch {
             errorMessage.value = null
-            runCatching { block() }.onFailure { errorMessage.value = it.message }
+            runCatching { block() }.onFailure { errorMessage.value = it.toUserFacingMessage("操作没有完成") }
         }
     }
 }

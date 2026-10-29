@@ -26,7 +26,13 @@ class PhotoProcessor(
     ): PreparedPhoto = withContext(Dispatchers.IO) {
         val exif = exifReader.read(source)
         val bounds = decodeBounds(source)
-        require(bounds.first > 0 && bounds.second > 0) { "Unsupported or damaged image" }
+        require(bounds.first > 0 && bounds.second > 0) { "damaged image" }
+        require(bounds.first <= MAX_SOURCE_EDGE && bounds.second <= MAX_SOURCE_EDGE) {
+            "照片尺寸过大，无法安全处理"
+        }
+        require(bounds.first.toLong() * bounds.second <= MAX_SOURCE_PIXELS) {
+            "照片像素数量过大，无法安全处理"
+        }
 
         val maxEdge = if (quality == PhotoQuality.HIGH) 4_096 else 2_560
         val jpegQuality = if (quality == PhotoQuality.HIGH) 95 else 90
@@ -40,7 +46,7 @@ class PhotoProcessor(
         try {
             stagingFile.outputStream().buffered().use { output ->
                 check(scaled.compress(Bitmap.CompressFormat.JPEG, jpegQuality, output)) {
-                    "Could not encode image"
+                    "照片编码失败"
                 }
             }
             PreparedPhoto(
@@ -72,7 +78,7 @@ class PhotoProcessor(
         val options = BitmapFactory.Options().apply { inSampleSize = sampleSize }
         return contentResolver.openInputStream(uri)?.use {
             BitmapFactory.decodeStream(it, null, options)
-        } ?: error("Could not decode image")
+        } ?: error("damaged image")
     }
 
     private fun calculateSampleSize(width: Int, height: Int, maxEdge: Int): Int {
@@ -113,5 +119,10 @@ class PhotoProcessor(
             else -> return bitmap
         }
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    }
+
+    companion object {
+        private const val MAX_SOURCE_EDGE = 100_000
+        private const val MAX_SOURCE_PIXELS = 1_000_000_000L
     }
 }

@@ -37,7 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
+import com.mealory.app.ui.components.MealPhotoImage
 import com.mealory.app.data.database.entity.MealType
 import com.mealory.app.data.database.entity.MealWithDetails
 import java.io.File
@@ -168,7 +168,7 @@ private fun MemoryMealCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         if (cover != null) {
-            AsyncImage(
+            MealPhotoImage(
                 model = File(context.filesDir, cover.relativePath),
                 contentDescription = meal.meal.title ?: "回忆照片",
                 contentScale = ContentScale.Crop,
@@ -220,7 +220,7 @@ private fun PastMonthCard(
                             .background(MaterialTheme.colorScheme.primaryContainer),
                     )
                 } else {
-                    AsyncImage(
+                    MealPhotoImage(
                         model = File(context.filesDir, photo),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,

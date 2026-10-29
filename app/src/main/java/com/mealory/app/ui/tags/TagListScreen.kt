@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mealory.app.data.repository.MealInputLimits
 
 data class TagSummaryUi(
     val id: String,
@@ -218,7 +219,7 @@ private fun NameEditorDialog(
         text = {
             OutlinedTextField(
                 value = value,
-                onValueChange = { value = it },
+                onValueChange = { value = it.take(MealInputLimits.TAG_NAME) },
                 label = { Text("名称") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),

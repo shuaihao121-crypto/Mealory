@@ -378,24 +378,51 @@ class MealoryDatabaseTest {
         assertTrue(repository.getMeal(recent.id) != null)
     }
 
+    @Test
+    fun pagingLoadsOnlyOnePageFromLargeMealHistory() = runTest {
+        val meals = (0 until 1_200).map { index ->
+            meal(
+                id = "bulk-$index",
+                dateEpochDay = 18_000L + index,
+                minuteOfDay = index % 1_440,
+                createdAt = index.toLong(),
+            )
+        }
+        database.backupDao().insertMeals(meals)
+
+        val result = database.mealDao().pagingSource("").load(
+            PagingSource.LoadParams.Refresh(
+                key = null,
+                loadSize = 30,
+                placeholdersEnabled = false,
+            ),
+        )
+        val page = result as PagingSource.LoadResult.Page
+        assertEquals(30, page.data.size)
+        assertEquals("bulk-1199", page.data.first().meal.id)
+        assertTrue(page.nextKey != null)
+    }
+
     private fun meal(
         id: String = "meal-1",
-        placeId: String?,
-        coverPhotoId: String?,
+        placeId: String? = null,
+        coverPhotoId: String? = null,
         title: String = "牛肉面",
         dateEpochDay: Long = 20_386L,
+        minuteOfDay: Int = 18 * 60 + 42,
+        createdAt: Long = 1_000L,
     ) = MealEntity(
         id = id,
         dateEpochDay = dateEpochDay,
-        minuteOfDay = 18 * 60 + 42,
+        minuteOfDay = minuteOfDay,
         mealType = MealType.DINNER,
         title = title,
         note = null,
         placeId = placeId,
         coverPhotoId = coverPhotoId,
         timeZoneId = "Asia/Shanghai",
-        createdAt = 1_000L,
-        updatedAt = 1_000L,
+        createdAt = createdAt,
+        updatedAt = createdAt,
         deletedAt = null,
     )
 

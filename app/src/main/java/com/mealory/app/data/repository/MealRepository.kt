@@ -15,6 +15,7 @@ import com.mealory.app.data.database.entity.PersonEntity
 import com.mealory.app.data.database.entity.PersonSummary
 import com.mealory.app.data.database.entity.PlaceEntity
 import com.mealory.app.data.database.entity.PlaceSummary
+import com.mealory.app.data.database.entity.PhotoStorageStats
 import java.util.Locale
 import java.util.UUID
 import kotlin.random.Random
@@ -58,6 +59,10 @@ class MealRepository(
     fun observeActiveMealCount(): Flow<Long> = mealDao.observeActiveMealCount()
 
     fun observeFirstActiveMealDate(): Flow<Long?> = mealDao.observeFirstActiveMealDate()
+
+    fun observeActiveRecordedDayCount(): Flow<Long> = mealDao.observeActiveRecordedDayCount()
+
+    fun observePhotoStorageStats(): Flow<PhotoStorageStats> = photoDao.observeStorageStats()
 
     fun observeMemoryWindow(targetEpochDay: Long): Flow<List<MealWithDetails>> =
         mealDao.observeMemoryWindow(targetEpochDay)
@@ -129,7 +134,7 @@ class MealRepository(
 
     suspend fun createPerson(name: String): String = database.withTransaction {
         val normalized = name.normalizedName()
-        require(normalized.isNotEmpty()) { "Person name cannot be blank" }
+        validateTagName(normalized, "人物")
         personDao.getByName(normalized)?.id ?: UUID.randomUUID().toString().also { id ->
             val now = System.currentTimeMillis()
             personDao.insert(PersonEntity(id, normalized, now, now))
@@ -138,7 +143,7 @@ class MealRepository(
 
     suspend fun renamePerson(personId: String, name: String) = database.withTransaction {
         val normalized = name.normalizedName()
-        require(normalized.isNotEmpty()) { "Person name cannot be blank" }
+        validateTagName(normalized, "人物")
         val current = checkNotNull(personDao.getById(personId)) { "Person does not exist: $personId" }
         val duplicate = personDao.getByName(normalized)
         require(duplicate == null || duplicate.id == personId) { "Person already exists: $normalized" }
@@ -149,7 +154,7 @@ class MealRepository(
 
     suspend fun createPlace(name: String): String = database.withTransaction {
         val normalized = name.normalizedName()
-        require(normalized.isNotEmpty()) { "Place name cannot be blank" }
+        validateTagName(normalized, "地点")
         placeDao.getByName(normalized)?.id ?: UUID.randomUUID().toString().also { id ->
             val now = System.currentTimeMillis()
             placeDao.insert(PlaceEntity(id, normalized, now, now))
@@ -158,7 +163,7 @@ class MealRepository(
 
     suspend fun renamePlace(placeId: String, name: String) = database.withTransaction {
         val normalized = name.normalizedName()
-        require(normalized.isNotEmpty()) { "Place name cannot be blank" }
+        validateTagName(normalized, "地点")
         val current = checkNotNull(placeDao.getById(placeId)) { "Place does not exist: $placeId" }
         val duplicate = placeDao.getByName(normalized)
         require(duplicate == null || duplicate.id == placeId) { "Place already exists: $normalized" }
@@ -174,6 +179,8 @@ class MealRepository(
     ) = database.withTransaction {
         val now = System.currentTimeMillis()
         val normalizedPlace = placeName.normalizedName()
+        if (normalizedPlace.isNotEmpty()) validateTagName(normalizedPlace, "地点")
+        validateMealText(meal)
         val place = normalizedPlace.takeIf(String::isNotEmpty)?.let { name ->
             placeDao.getByName(name) ?: PlaceEntity(UUID.randomUUID().toString(), name, now, now).also {
                 placeDao.insert(it)
@@ -183,6 +190,7 @@ class MealRepository(
             .map(String::normalizedName)
             .filter(String::isNotEmpty)
             .distinctBy { it.lowercase(Locale.ROOT) }
+            .onEach { validateTagName(it, "人物") }
             .map { name ->
                 personDao.getByName(name) ?: PersonEntity(UUID.randomUUID().toString(), name, now, now).also {
                     personDao.insert(it)
@@ -207,6 +215,7 @@ class MealRepository(
         personIds: Set<String> = emptySet(),
     ) {
         require(meal.minuteOfDay in 0..1_439) { "minuteOfDay must be between 0 and 1439" }
+        validateMealText(meal)
         require(photos.size <= MAX_PHOTOS_PER_MEAL) { "A meal can contain at most 9 photos" }
         require(photos.all { it.mealId == meal.id }) { "Every photo must belong to the meal" }
         require(photos.map { it.id }.toSet().size == photos.size) { "Photo IDs must be unique" }
@@ -230,6 +239,7 @@ class MealRepository(
         personIds: Set<String>,
     ) {
         require(meal.minuteOfDay in 0..1_439) { "minuteOfDay must be between 0 and 1439" }
+        validateMealText(meal)
         database.withTransaction {
             require(
                 meal.coverPhotoId == null ||
@@ -266,6 +276,20 @@ class MealRepository(
 
     companion object {
         const val MAX_PHOTOS_PER_MEAL = 9
+    }
+}
+
+private fun validateTagName(name: String, label: String) {
+    require(name.isNotEmpty()) { "${label}名称不能为空" }
+    require(name.length <= MealInputLimits.TAG_NAME) { "${label}名称不能超过 ${MealInputLimits.TAG_NAME} 个字符" }
+}
+
+private fun validateMealText(meal: MealEntity) {
+    require((meal.title?.length ?: 0) <= MealInputLimits.TITLE) {
+        "饭名不能超过 ${MealInputLimits.TITLE} 个字符"
+    }
+    require((meal.note?.length ?: 0) <= MealInputLimits.NOTE) {
+        "备注不能超过 ${MealInputLimits.NOTE} 个字符"
     }
 }
 

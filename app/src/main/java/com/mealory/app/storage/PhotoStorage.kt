@@ -46,7 +46,7 @@ class PhotoStorage(
     fun createCameraCapture(): CameraCapture {
         val directory = File(context.cacheDir, "camera").apply { mkdirs() }
         val file = File(directory, "camera-${UUID.randomUUID()}.jpg")
-        check(file.createNewFile()) { "Could not create camera file" }
+        check(file.createNewFile()) { "无法创建相机临时文件" }
         val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",

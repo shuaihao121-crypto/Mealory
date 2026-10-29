@@ -9,6 +9,7 @@ import com.mealory.app.data.database.entity.MealType
 import com.mealory.app.data.database.entity.MealWithDetails
 import com.mealory.app.data.database.entity.PersonEntity
 import com.mealory.app.data.database.entity.PlaceEntity
+import com.mealory.app.util.toUserFacingMessage
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -56,7 +57,7 @@ class MealDetailViewModel(
                     placeName = placeName,
                     peopleNames = peopleNames.split('，', ',').map(String::trim),
                 )
-            }.onFailure { errorMessage.value = it.message }
+            }.onFailure { errorMessage.value = it.toUserFacingMessage("修改没有保存成功") }
         }
     }
 
@@ -64,7 +65,7 @@ class MealDetailViewModel(
         viewModelScope.launch {
             runCatching {
                 repository.setCoverPhoto(mealId, photoId, System.currentTimeMillis())
-            }.onFailure { errorMessage.value = it.message }
+            }.onFailure { errorMessage.value = it.toUserFacingMessage("封面没有更新成功") }
         }
     }
 
@@ -72,7 +73,7 @@ class MealDetailViewModel(
         viewModelScope.launch {
             runCatching { repository.softDelete(mealId, System.currentTimeMillis()) }
                 .onSuccess { deleted.value = true }
-                .onFailure { errorMessage.value = it.message }
+                .onFailure { errorMessage.value = it.toUserFacingMessage("删除没有完成") }
         }
     }
 }
