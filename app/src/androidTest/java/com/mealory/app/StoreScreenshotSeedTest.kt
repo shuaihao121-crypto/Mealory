@@ -34,6 +34,7 @@ class StoreScreenshotSeedTest {
         val breakfast = File(cache, "store-demo-breakfast.png").requireReadable()
         val lunch = File(cache, "store-demo-lunch.png").requireReadable()
         val dinner = File(cache, "store-demo-dinner.png").requireReadable()
+        val today = LocalDate.now()
 
         container.database.clearAllTables()
         File(application.filesDir, "pictures").deleteRecursively()
@@ -66,31 +67,31 @@ class StoreScreenshotSeedTest {
         }
 
         record(
-            LocalDate.of(2026, 10, 29), 8 * 60 + 10, MealType.BREAKFAST,
+            today, 8 * 60 + 10, MealType.BREAKFAST,
             "清晨的热粥", "慢慢吃完，再开始今天。", "家", listOf("妈妈"), breakfast,
         )
         record(
-            LocalDate.of(2026, 10, 29), 12 * 60 + 30, MealType.LUNCH,
+            today, 12 * 60 + 30, MealType.LUNCH,
             "家常午饭", "番茄炒蛋还是最熟悉的味道。", "一食堂", listOf("小王"), lunch,
         )
         record(
-            LocalDate.of(2026, 10, 29), 18 * 60 + 45, MealType.DINNER,
+            today, 18 * 60 + 45, MealType.DINNER,
             "一碗热汤面", "晚上的风有点凉。", "家", emptyList(), dinner,
         )
         record(
-            LocalDate.of(2026, 10, 28), 12 * 60 + 5, MealType.LUNCH,
+            today.minusDays(1), 12 * 60 + 5, MealType.LUNCH,
             "番茄炒蛋", "普通的一顿，也值得留下。", "一食堂", listOf("小王"), lunch,
         )
         record(
-            LocalDate.of(2026, 10, 25), 19 * 60 + 20, MealType.DINNER,
+            today.minusDays(4), 19 * 60 + 20, MealType.DINNER,
             "周末饺子", "回家吃饭。", "家", listOf("爸爸", "妈妈"), dinner,
         )
         record(
-            LocalDate.of(2026, 9, 24), 11 * 60 + 32, MealType.LUNCH,
+            today.minusMonths(1).minusDays(5), 11 * 60 + 32, MealType.LUNCH,
             "第一次记录", "从这一顿开始。", "校园", emptyList(), breakfast,
         )
         record(
-            LocalDate.of(2025, 10, 29), 18 * 60 + 10, MealType.DINNER,
+            today.minusYears(1), 18 * 60 + 10, MealType.DINNER,
             "去年的这一天", "时间会把一顿饭变成回忆。", "家", listOf("妈妈"), dinner,
         )
     }

@@ -10,6 +10,7 @@ captures/
 .cxx/
 app/build/
 store/copyright/qa-*/
+release-output/
 *.apk
 *.aab
 *.jks
