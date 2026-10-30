@@ -50,18 +50,21 @@ class SettingsRepositoryTest {
     fun defaultsAndUpdatesRoundTrip() = runTest {
         val defaults = repository.settings.first()
         assertFalse(defaults.onboardingCompleted)
+        assertEquals(0, defaults.privacyPolicyVersionAccepted)
         assertEquals(ThemeMode.SYSTEM, defaults.themeMode)
         assertEquals(PhotoQuality.STANDARD, defaults.photoQuality)
         assertNull(defaults.lastBackupAt)
         assertEquals(MealTimeRanges.Default, defaults.defaultMealTimeRanges)
 
         repository.setOnboardingCompleted(true)
+        repository.setPrivacyPolicyVersionAccepted(1)
         repository.setThemeMode(ThemeMode.DARK)
         repository.setPhotoQuality(PhotoQuality.HIGH)
         repository.setLastBackupAt(123_456L)
         repository.setDefaultMealTimeRanges(MealTimeRanges.Default.copy(version = 1))
 
         val updated = repository.settings.first { it.onboardingCompleted }
+        assertEquals(1, updated.privacyPolicyVersionAccepted)
         assertEquals(ThemeMode.DARK, updated.themeMode)
         assertEquals(PhotoQuality.HIGH, updated.photoQuality)
         assertEquals(123_456L, updated.lastBackupAt)

@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,6 +39,7 @@ import java.util.Locale
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onPrivacyPolicy: () -> Unit,
     viewModel: SettingsViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -106,6 +108,9 @@ fun SettingsScreen(
             SettingSection("隐私") {
                 Text("Mealory 不申请网络、定位、通讯录或全相册读取权限。")
                 Text("所有记录默认只保存在这台设备中。", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = onPrivacyPolicy, contentPadding = PaddingValues(0.dp)) {
+                    Text("查看完整隐私政策")
+                }
             }
         }
         item {

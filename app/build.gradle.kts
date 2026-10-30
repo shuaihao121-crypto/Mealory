@@ -1,7 +1,24 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.plugin.compose")
+}
+
+fun loadProperties(file: File): Properties = Properties().apply {
+    if (file.isFile) file.inputStream().use(::load)
+}
+
+fun String.asBuildConfigString(): String =
+    "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+val releaseMetadata = loadProperties(rootProject.file("release.properties"))
+val signingPropertiesFile = rootProject.file("keystore.properties")
+val signingProperties = loadProperties(signingPropertiesFile)
+val releasePackageRequested = gradle.startParameter.taskNames.any { taskName ->
+    taskName.contains("Release", ignoreCase = true) &&
+        listOf("assemble", "bundle", "package").any { taskName.contains(it, ignoreCase = true) }
 }
 
 android {
@@ -14,14 +31,54 @@ android {
         minSdk = 26
         targetSdk = 37
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
 
+    signingConfigs {
+        create("release") {
+            if (signingPropertiesFile.isFile) {
+                storeFile = file(signingProperties.getProperty("storeFile"))
+                storePassword = signingProperties.getProperty("storePassword")
+                keyAlias = signingProperties.getProperty("keyAlias")
+                keyPassword = signingProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            buildConfigField("String", "SUPPORT_EMAIL", "support@example.invalid".asBuildConfigString())
+            buildConfigField(
+                "String",
+                "PRIVACY_POLICY_URL",
+                "https://example.invalid/mealory/privacy".asBuildConfigString(),
+            )
+        }
         release {
+            val supportEmail = releaseMetadata.getProperty("supportEmail", "").trim()
+            val privacyPolicyUrl = releaseMetadata.getProperty("privacyPolicyUrl", "").trim()
+            if (releasePackageRequested) {
+                require(supportEmail.matches(Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"))) {
+                    "release.properties must contain a valid supportEmail"
+                }
+                require(privacyPolicyUrl.startsWith("https://")) {
+                    "release.properties must contain an HTTPS privacyPolicyUrl"
+                }
+                require(signingPropertiesFile.isFile) {
+                    "keystore.properties is required for a Release package"
+                }
+                listOf("storeFile", "storePassword", "keyAlias", "keyPassword").forEach { key ->
+                    require(!signingProperties.getProperty(key).isNullOrBlank()) {
+                        "keystore.properties is missing $key"
+                    }
+                }
+            }
+            buildConfigField("String", "SUPPORT_EMAIL", supportEmail.asBuildConfigString())
+            buildConfigField("String", "PRIVACY_POLICY_URL", privacyPolicyUrl.asBuildConfigString())
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

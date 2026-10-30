@@ -13,6 +13,7 @@ import com.mealory.app.data.database.entity.MealEntity
 import com.mealory.app.data.database.entity.MealType
 import com.mealory.app.data.preferences.PhotoQuality
 import com.mealory.app.data.preferences.ThemeMode
+import com.mealory.app.ui.privacy.CurrentPrivacyPolicyVersion
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.runBlocking
@@ -30,9 +31,27 @@ class OnboardingTest {
         val application = composeRule.activity.application as MealoryApplication
         runBlocking {
             application.container.settingsRepository.setOnboardingCompleted(false)
+            application.container.settingsRepository.setPrivacyPolicyVersionAccepted(CurrentPrivacyPolicyVersion)
             application.container.database.clearAllTables()
         }
         composeRule.activityRule.scenario.recreate()
+    }
+
+    @Test
+    fun privacyConsentAppearsBeforeOnboarding() {
+        val application = composeRule.activity.application as MealoryApplication
+        runBlocking {
+            application.container.settingsRepository.setPrivacyPolicyVersionAccepted(0)
+        }
+        composeRule.activityRule.scenario.recreate()
+
+        composeRule.waitUntil(timeoutMillis = 4_000) {
+            composeRule.onAllNodesWithText("同意并继续").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("隐私保护说明").assertIsDisplayed()
+        composeRule.onNodeWithText("不同意并退出").assertIsDisplayed()
+        composeRule.onNodeWithText("同意并继续").performClick()
+        composeRule.onNodeWithText("开始记录").assertIsDisplayed()
     }
 
     @Test

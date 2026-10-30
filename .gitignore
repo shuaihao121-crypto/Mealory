@@ -2,11 +2,14 @@
 .gradle/
 .idea/
 local.properties
+release.properties
+keystore.properties
 build/
 captures/
 .externalNativeBuild/
 .cxx/
 app/build/
+store/copyright/qa-*/
 *.apk
 *.aab
 *.jks

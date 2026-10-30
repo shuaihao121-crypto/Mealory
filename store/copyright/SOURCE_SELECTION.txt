@@ -1,0 +1,5 @@
+全部非空 Kotlin 源程序行数：6912
+源程序文档共 60 页，每页 50 行。
+前 30 页：第 1–1500 行，从 app/src/main/java/com/mealory/app/AppContainer.kt:1 到 app/src/main/java/com/mealory/app/data/repository/MealRecorder.kt:35
+后 30 页：第 5413–6912 行，从 app/src/main/java/com/mealory/app/ui/memories/MemoriesScreen.kt:97 到 app/src/main/java/com/mealory/app/work/DeletedMealsCleanupWorker.kt:42
+空白行未计入每页 50 行；源程序正文内容和顺序未改写。

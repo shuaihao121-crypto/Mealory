@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -27,6 +28,11 @@ class SettingsRepository(
 
     suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { it[Keys.OnboardingCompleted] = completed }
+    }
+
+    suspend fun setPrivacyPolicyVersionAccepted(version: Int) {
+        require(version >= 0)
+        dataStore.edit { it[Keys.PrivacyPolicyVersionAccepted] = version }
     }
 
     suspend fun setThemeMode(mode: ThemeMode) {
@@ -51,6 +57,7 @@ class SettingsRepository(
     suspend fun replaceAll(settings: MealorySettings) {
         dataStore.edit { preferences ->
             preferences[Keys.OnboardingCompleted] = settings.onboardingCompleted
+            preferences[Keys.PrivacyPolicyVersionAccepted] = settings.privacyPolicyVersionAccepted
             preferences[Keys.ThemeMode] = settings.themeMode.name
             preferences[Keys.PhotoQuality] = settings.photoQuality.name
             settings.lastBackupAt?.let { preferences[Keys.LastBackupAt] = it }
@@ -61,6 +68,7 @@ class SettingsRepository(
 
     private fun mapSettings(preferences: Preferences): MealorySettings = MealorySettings(
         onboardingCompleted = preferences[Keys.OnboardingCompleted] ?: false,
+        privacyPolicyVersionAccepted = preferences[Keys.PrivacyPolicyVersionAccepted] ?: 0,
         themeMode = preferences[Keys.ThemeMode].toEnumOrDefault(ThemeMode.SYSTEM),
         photoQuality = preferences[Keys.PhotoQuality].toEnumOrDefault(PhotoQuality.STANDARD),
         lastBackupAt = preferences[Keys.LastBackupAt],
@@ -76,6 +84,7 @@ class SettingsRepository(
 
     private object Keys {
         val OnboardingCompleted = booleanPreferencesKey("onboarding_completed")
+        val PrivacyPolicyVersionAccepted = intPreferencesKey("privacy_policy_version_accepted")
         val ThemeMode = stringPreferencesKey("theme_mode")
         val PhotoQuality = stringPreferencesKey("photo_quality")
         val LastBackupAt = longPreferencesKey("last_backup_at")

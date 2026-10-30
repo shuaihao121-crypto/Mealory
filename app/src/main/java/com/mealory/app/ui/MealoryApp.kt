@@ -65,6 +65,9 @@ import com.mealory.app.ui.memories.MemoriesScreen
 import com.mealory.app.ui.memories.AnnualMemoryScreen
 import com.mealory.app.ui.mealdetail.MealDetailScreen
 import com.mealory.app.ui.profile.ProfileScreen
+import com.mealory.app.ui.privacy.CurrentPrivacyPolicyVersion
+import com.mealory.app.ui.privacy.PrivacyConsentScreen
+import com.mealory.app.ui.privacy.PrivacyPolicyScreen
 import com.mealory.app.ui.deleted.RecentlyDeletedScreen
 import com.mealory.app.ui.backup.BackupScreen
 import com.mealory.app.ui.settings.SettingsScreen
@@ -75,6 +78,7 @@ import com.mealory.app.ui.tags.PlacesScreen
 import kotlinx.coroutines.delay
 
 private const val SplashRoute = "splash"
+private const val PrivacyConsentRoute = "privacy-consent"
 private const val OnboardingRoute = "onboarding"
 private const val MainRoute = "main"
 private const val AddMealRoute = "add-meal"
@@ -95,21 +99,41 @@ private val destinations = listOf(
 )
 
 @Composable
-fun MealoryApp(viewModel: MealoryViewModel = viewModel()) {
+fun MealoryApp(
+    onPrivacyDeclined: () -> Unit,
+    viewModel: MealoryViewModel = viewModel(),
+) {
     val navController = rememberNavController()
-    val onboardingCompleted by viewModel.onboardingCompleted.collectAsStateWithLifecycle()
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
     var showSavedMessage by rememberSaveable { mutableStateOf(false) }
 
     NavHost(navController = navController, startDestination = SplashRoute) {
         composable(SplashRoute) {
             SplashScreen(
-                ready = onboardingCompleted != null,
+                ready = settings != null,
                 onFinished = {
-                    val destination = if (onboardingCompleted == true) MainRoute else OnboardingRoute
+                    val currentSettings = settings ?: return@SplashScreen
+                    val destination = when {
+                        currentSettings.privacyPolicyVersionAccepted < CurrentPrivacyPolicyVersion -> PrivacyConsentRoute
+                        currentSettings.onboardingCompleted -> MainRoute
+                        else -> OnboardingRoute
+                    }
                     navController.navigate(destination) {
                         popUpTo(SplashRoute) { inclusive = true }
                     }
                 },
+            )
+        }
+        composable(PrivacyConsentRoute) {
+            PrivacyConsentScreen(
+                onAccept = {
+                    viewModel.acceptPrivacyPolicy(CurrentPrivacyPolicyVersion)
+                    val destination = if (settings?.onboardingCompleted == true) MainRoute else OnboardingRoute
+                    navController.navigate(destination) {
+                        popUpTo(PrivacyConsentRoute) { inclusive = true }
+                    }
+                },
+                onDecline = onPrivacyDeclined,
             )
         }
         composable(OnboardingRoute) {
@@ -369,7 +393,13 @@ private fun MainShell(
                 BackupScreen(onBack = { navController.popBackStack() })
             }
             composable("settings") {
-                SettingsScreen(onBack = { navController.popBackStack() })
+                SettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onPrivacyPolicy = { navController.navigate("privacy-policy") },
+                )
+            }
+            composable("privacy-policy") {
+                PrivacyPolicyScreen(onBack = { navController.popBackStack() })
             }
             composable("people") {
                 PeopleScreen(

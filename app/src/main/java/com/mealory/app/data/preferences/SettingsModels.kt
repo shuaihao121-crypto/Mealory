@@ -71,6 +71,7 @@ data class MealTimeRanges(
 
 data class MealorySettings(
     val onboardingCompleted: Boolean = false,
+    val privacyPolicyVersionAccepted: Int = 0,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val photoQuality: PhotoQuality = PhotoQuality.STANDARD,
     val lastBackupAt: Long? = null,

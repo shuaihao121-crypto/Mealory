@@ -1,0 +1,4 @@
+# Copy this file to release.properties and fill in the public release metadata.
+# release.properties is intentionally ignored by Git.
+supportEmail=your-public-support-email@example.com
+privacyPolicyUrl=https://your-domain.example/mealory/privacy/

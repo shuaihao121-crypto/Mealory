@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.DARK -> true
             }
             MealoryTheme(darkTheme = darkTheme) {
-                MealoryApp()
+                MealoryApp(onPrivacyDeclined = ::finish)
             }
         }
     }

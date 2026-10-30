@@ -123,6 +123,7 @@ object BackupJson {
 
     fun settingsToString(value: MealorySettings): String = JSONObject()
         .put("onboardingCompleted", value.onboardingCompleted)
+        .put("privacyPolicyVersionAccepted", value.privacyPolicyVersionAccepted)
         .put("themeMode", value.themeMode.name)
         .put("photoQuality", value.photoQuality.name)
         .putNullable("lastBackupAt", value.lastBackupAt)
@@ -133,6 +134,7 @@ object BackupJson {
         val json = JSONObject(value)
         return MealorySettings(
             onboardingCompleted = json.getBoolean("onboardingCompleted"),
+            privacyPolicyVersionAccepted = json.optInt("privacyPolicyVersionAccepted", 0),
             themeMode = ThemeMode.valueOf(json.getString("themeMode")),
             photoQuality = PhotoQuality.valueOf(json.getString("photoQuality")),
             lastBackupAt = json.nullableLong("lastBackupAt"),
