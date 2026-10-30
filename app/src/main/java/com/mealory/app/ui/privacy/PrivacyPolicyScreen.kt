@@ -41,7 +41,8 @@ private val policySections = listOf(
         title = "一、适用范围",
         paragraphs = listOf(
             "本政策适用于 Mealory Android 应用。Mealory 是一款离线饮食记录工具，不提供账号、社交、广告、支付或云同步服务。",
-            "版本生效日期：2026年10月29日。",
+            "运营者：${BuildConfig.DEVELOPER_NAME}",
+            "版本生效日期：2026年10月30日。",
         ),
     ),
     PolicySection(

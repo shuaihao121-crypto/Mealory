@@ -50,6 +50,7 @@ android {
 
     buildTypes {
         debug {
+            buildConfigField("String", "DEVELOPER_NAME", "Mealory 开发者".asBuildConfigString())
             buildConfigField("String", "SUPPORT_EMAIL", "support@example.invalid".asBuildConfigString())
             buildConfigField(
                 "String",
@@ -58,9 +59,13 @@ android {
             )
         }
         release {
+            val developerName = releaseMetadata.getProperty("developerName", "").trim()
             val supportEmail = releaseMetadata.getProperty("supportEmail", "").trim()
             val privacyPolicyUrl = releaseMetadata.getProperty("privacyPolicyUrl", "").trim()
             if (releasePackageRequested) {
+                require(developerName.isNotBlank()) {
+                    "release.properties must contain developerName"
+                }
                 require(supportEmail.matches(Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"))) {
                     "release.properties must contain a valid supportEmail"
                 }
@@ -76,6 +81,7 @@ android {
                     }
                 }
             }
+            buildConfigField("String", "DEVELOPER_NAME", developerName.asBuildConfigString())
             buildConfigField("String", "SUPPORT_EMAIL", supportEmail.asBuildConfigString())
             buildConfigField("String", "PRIVACY_POLICY_URL", privacyPolicyUrl.asBuildConfigString())
             signingConfig = signingConfigs.getByName("release")
