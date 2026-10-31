@@ -7,7 +7,7 @@ plugins {
 }
 
 fun loadProperties(file: File): Properties = Properties().apply {
-    if (file.isFile) file.inputStream().use(::load)
+    if (file.isFile) file.inputStream().reader(Charsets.UTF_8).use(::load)
 }
 
 fun String.asBuildConfigString(): String =

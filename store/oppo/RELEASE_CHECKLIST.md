@@ -17,11 +17,11 @@
 - [x] 保持 `versionCode` 为首次正式发布的 1
 - [x] Release 构建缺少公开信息或签名配置时主动失败
 - [x] 准备本机签名初始化、正式构建、验签和哈希脚本
-- [ ] 创建永久 Release keystore
+- [x] 创建永久 Release keystore
 - [ ] 将 keystore、密码和证书指纹制作至少两份安全备份
-- [ ] 生成正式签名 APK
-- [ ] `apksigner verify --verbose --print-certs` 通过
-- [ ] 保存最终 APK SHA-256
+- [x] 生成正式签名 APK
+- [x] `apksigner verify --verbose --print-certs` 通过
+- [x] 保存最终 APK SHA-256
 
 ## 隐私与合规
 
@@ -56,12 +56,12 @@
 
 ## 正式包验收
 
-- [ ] 自动测试、lint、Release 构建全部通过
+- [x] 自动测试、lint、Release 构建全部通过
 - [ ] 备份手机中的 Debug 版数据
 - [ ] 经用户确认后卸载 Debug 版
 - [ ] 安装正式签名 Release 版
 - [ ] 首次隐私流程、四个 Tab、相机、Photo Picker、备份恢复均通过
-- [ ] 冷启动无崩溃
+- [x] 正式版在模拟器冷启动无崩溃
 - [ ] 工作区干净并创建 1.0.0 Git 标签
 
 ## OPPO 提交
