@@ -17,8 +17,10 @@
 - `assembleRelease` 通过
 - `apksigner verify --verbose --print-certs` 通过
 - 正式包在 Android API 37 模拟器安装成功
+- 正式包在 OPPO Reno12（PJV110）安装成功，系统报告为非调试构建
 - 首次隐私页面显示运营者“白子豪”、同意与拒绝入口
 - 首次引导完成后四个主导航入口正常显示
 - 正式版冷启动成功，版本信息为 `1.0.0` / `1`
+- 用户在 OPPO 真机完成实际试用，未发现明显问题
 
 正式密钥、密码和 `keystore.properties` 不进入 Git。发布前必须将密钥与密码至少备份到两个安全位置。
