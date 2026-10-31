@@ -11,6 +11,7 @@ captures/
 app/build/
 store/copyright/qa-*/
 release-output/
+/site-privacy/
 *.apk
 *.aab
 *.jks
