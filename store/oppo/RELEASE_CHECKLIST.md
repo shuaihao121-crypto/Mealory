@@ -18,7 +18,7 @@
 - [x] Release 构建缺少公开信息或签名配置时主动失败
 - [x] 准备本机签名初始化、正式构建、验签和哈希脚本
 - [x] 创建永久 Release keystore
-- [ ] 将 keystore、密码和证书指纹制作至少两份安全备份
+- [x] 将 keystore 与密码制作至少两份安全备份，并记录证书指纹
 - [x] 生成正式签名 APK
 - [x] `apksigner verify --verbose --print-certs` 通过
 - [x] 保存最终 APK SHA-256
