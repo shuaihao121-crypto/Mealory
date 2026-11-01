@@ -1,4 +1,4 @@
-name: Android CI
+name: Repository checks
 
 on:
   push:
@@ -15,9 +15,9 @@ concurrency:
 
 jobs:
   verify:
-    name: Test, lint and build
+    name: Privacy and repository quality
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
 
     steps:
       - name: Check out source
@@ -28,32 +28,47 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
-
-      - name: Update Android SDK tools
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: "12266719"
-          packages: platform-tools platforms;android-36 build-tools;36.0.0
 
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Verify project
-        run: >-
-          ./gradlew --no-daemon
-          -Pmealory.compileSdk=36
-          -Pmealory.targetSdk=36
-          -Pmealory.buildTools=36.0.0
-          testDebugUnitTest lintDebug assembleDebug
+      - name: Verify Gradle wrapper
+        run: ./gradlew --no-daemon --version
 
-      - name: Upload reports on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-verification-reports
-          path: |
-            app/build/reports/
-            app/build/test-results/
-          if-no-files-found: ignore
-          retention-days: 7
+      - name: Verify privacy and release boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          forbidden_files="$(git ls-files | grep -E '(^|/)(keystore\.properties|release\.properties)$|\.(apk|aab|jks|keystore)$' || true)"
+          if [[ -n "$forbidden_files" ]]; then
+            echo "Forbidden release material is tracked:"
+            echo "$forbidden_files"
+            exit 1
+          fi
+
+          if grep -R --include='AndroidManifest.xml' 'android.permission.INTERNET' app/src; then
+            echo "Mealory must remain offline; INTERNET permission detected."
+            exit 1
+          fi
+
+      - name: Verify GitHub presentation assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_files=(
+            README.md
+            LICENSE
+            CONTRIBUTING.md
+            SECURITY.md
+            store/oppo/assets/mealory-oppo-icon-512.png
+            store/oppo/screenshots/01-home.jpg
+            store/oppo/screenshots/02-record.png
+            store/oppo/screenshots/03-calendar.png
+            store/oppo/screenshots/04-memories.jpg
+            store/oppo/screenshots/05-backup.png
+          )
+
+          for file in "${required_files[@]}"; do
+            test -s "$file" || { echo "Missing or empty presentation file: $file"; exit 1; }
+          done

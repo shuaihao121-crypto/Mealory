@@ -9,7 +9,7 @@
     <img src="https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin 与 Jetpack Compose">
     <img src="https://img.shields.io/badge/Version-1.0.0-D96C45" alt="版本 1.0.0">
     <img src="https://img.shields.io/badge/Privacy-100%25%20Offline-5C7C5A" alt="完全离线">
-    <a href="https://github.com/shuaihao121-crypto/Mealory/actions/workflows/android-ci.yml"><img src="https://github.com/shuaihao121-crypto/Mealory/actions/workflows/android-ci.yml/badge.svg" alt="Android CI"></a>
+    <a href="https://github.com/shuaihao121-crypto/Mealory/actions/workflows/android-ci.yml"><img src="https://github.com/shuaihao121-crypto/Mealory/actions/workflows/android-ci.yml/badge.svg" alt="Repository checks"></a>
   </p>
 
   <p><em>MEALS TODAY, MEMORIES TOMORROW</em></p>
@@ -92,8 +92,7 @@ Debug APK 会生成在 `app/build/outputs/apk/debug/app-debug.apk`。设备测�
 - 已在 API 37 模拟器和 OPPO Reno12（Android 15）完成真机验收。
 - 相机、Photo Picker、ZIP 备份/完整替换恢复和冷启动均已实际验证。
 
-推送或提交 Pull Request 时，GitHub Actions 会自动运行单元测试、Lint 和 Debug 构建。
-云端使用公开稳定的 Android API 36 做兼容构建；正式项目默认仍为 API 37，并已在本地与真机完成验证。
+推送或提交 Pull Request 时，GitHub Actions 会自动验证 Gradle Wrapper、隐私权限边界、Release 密钥/安装包隔离和展示素材完整性。完整单元测试、Lint 与 Android 构建使用项目的 API 37 工具链在本地执行。
 
 ## 项目文档
 
