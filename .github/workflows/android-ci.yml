@@ -33,15 +33,8 @@ jobs:
       - name: Update Android SDK tools
         uses: android-actions/setup-android@v3
         with:
-          packages: platform-tools
-
-      - name: Accept Android SDK licenses
-        run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
-
-      - name: Install Android SDK packages
-        run: |
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" "build-tools;37.0.0"
+          cmdline-tools-version: "12266719"
+          packages: platform-tools platforms;android-37 build-tools;37.0.0
 
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
