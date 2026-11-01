@@ -9,6 +9,7 @@
     <img src="https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin 与 Jetpack Compose">
     <img src="https://img.shields.io/badge/Version-1.0.0-D96C45" alt="版本 1.0.0">
     <img src="https://img.shields.io/badge/Privacy-100%25%20Offline-5C7C5A" alt="完全离线">
+    <a href="https://github.com/shuaihao121-crypto/Mealory/actions/workflows/android-ci.yml"><img src="https://github.com/shuaihao121-crypto/Mealory/actions/workflows/android-ci.yml/badge.svg" alt="Android CI"></a>
   </p>
 
   <p><em>MEALS TODAY, MEMORIES TOMORROW</em></p>
