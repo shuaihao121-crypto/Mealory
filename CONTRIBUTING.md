@@ -15,13 +15,15 @@
 
 ## 提交代码
 
+本仓库公开用于展示和学习参考，但不采用开源许可证。准备修改源码或提交 Pull Request 前，请先通过 Issue 与项目所有者沟通并获得书面同意。
+
 1. 较大的功能或行为变化请先创建 Issue 讨论范围。
 2. 从 `main` 创建简短、单一目的的分支。
 3. 保持现有 Kotlin 与 Compose 风格，并为重要逻辑补充测试。
 4. 本地运行 `testDebugUnitTest`、`lintDebug` 和 `assembleDebug`。
 5. Pull Request 中说明动机、主要变化、验证方式和界面截图（如适用）。
 
-提交内容不得包含真实用户数据、Release 密钥、`keystore.properties`、`release.properties`、APK/AAB 或构建目录。
+提交内容不得包含真实用户数据、Release 密钥、`keystore.properties`、`release.properties`、APK/AAB 或构建目录。提交贡献并不会自动改变仓库中现有代码和素材的版权状态。
 
 ## 产品边界
 
