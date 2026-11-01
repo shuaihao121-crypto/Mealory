@@ -93,6 +93,7 @@ Debug APK 会生成在 `app/build/outputs/apk/debug/app-debug.apk`。设备测�
 - 相机、Photo Picker、ZIP 备份/完整替换恢复和冷启动均已实际验证。
 
 推送或提交 Pull Request 时，GitHub Actions 会自动运行单元测试、Lint 和 Debug 构建。
+云端使用公开稳定的 Android API 36 做兼容构建；正式项目默认仍为 API 37，并已在本地与真机完成验证。
 
 ## 项目文档
 

@@ -16,6 +16,9 @@ fun String.asBuildConfigString(): String =
 val releaseMetadata = loadProperties(rootProject.file("release.properties"))
 val signingPropertiesFile = rootProject.file("keystore.properties")
 val signingProperties = loadProperties(signingPropertiesFile)
+val compileSdkVersion = providers.gradleProperty("mealory.compileSdk").orNull?.toIntOrNull() ?: 37
+val targetSdkVersion = providers.gradleProperty("mealory.targetSdk").orNull?.toIntOrNull() ?: 37
+val buildToolsVersionName = providers.gradleProperty("mealory.buildTools").orNull ?: "37.0.0"
 val releasePackageRequested = gradle.startParameter.taskNames.any { taskName ->
     taskName.contains("Release", ignoreCase = true) &&
         listOf("assemble", "bundle", "package").any { taskName.contains(it, ignoreCase = true) }
@@ -23,13 +26,13 @@ val releasePackageRequested = gradle.startParameter.taskNames.any { taskName ->
 
 android {
     namespace = "com.mealory.app"
-    compileSdk = 37
-    buildToolsVersion = "37.0.0"
+    compileSdk = compileSdkVersion
+    buildToolsVersion = buildToolsVersionName
 
     defaultConfig {
         applicationId = "com.mealory.app"
         minSdk = 26
-        targetSdk = 37
+        targetSdk = targetSdkVersion
         versionCode = 1
         versionName = "1.0.0"
 

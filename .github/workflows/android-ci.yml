@@ -34,17 +34,18 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           cmdline-tools-version: "12266719"
-          packages: platform-tools
-
-      - name: Install Android API 37
-        run: |
-          "$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager" --channel=3 "platforms;android-37" "build-tools;37.0.0"
+          packages: platform-tools platforms;android-36 build-tools;36.0.0
 
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
       - name: Verify project
-        run: ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug
+        run: >-
+          ./gradlew --no-daemon
+          -Pmealory.compileSdk=36
+          -Pmealory.targetSdk=36
+          -Pmealory.buildTools=36.0.0
+          testDebugUnitTest lintDebug assembleDebug
 
       - name: Upload reports on failure
         if: failure()
