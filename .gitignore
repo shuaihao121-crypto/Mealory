@@ -1,5 +1,7 @@
 *.iml
 .gradle/
+.kotlin/
+.tmp/
 .idea/
 local.properties
 release.properties
@@ -11,6 +13,7 @@ captures/
 app/build/
 store/copyright/qa-*/
 release-output/
+release-signing/
 /site-privacy/
 *.apk
 *.aab
@@ -19,4 +22,5 @@ release-output/
 tools/download-android-studio.ps1
 tools/download-in-parts.ps1
 tools/emulator-package.xml
+store/oppo/OPPO单机APP承诺函官方模板.docx
 
